@@ -131,6 +131,9 @@ if (file_exists($configPath)) {
         <div class="stat-pill">
           <i class="fa-solid fa-calendar-day"></i> <span data-i18n="stat_today_rx">Today's Rx</span>: <strong id="stat-today-rx">0</strong>
         </div>
+        <div class="stat-pill" style="border-color:var(--emerald-600);">
+          <i class="fa-solid fa-coins" style="color:var(--emerald-600);"></i> <span>Revenue Today</span>: <strong id="stat-today-revenue" style="color:var(--emerald-700);">LKR 0.00</strong>
+        </div>
         <div class="stat-pill">
           <i class="fa-solid fa-user-group"></i> <span data-i18n="stat_patients">Patients</span>: <strong id="stat-total-patients">0</strong>
         </div>

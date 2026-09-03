@@ -18,6 +18,12 @@ try {
         ORDER BY p.id DESC LIMIT 5");
     $recent = $recentStmt->fetchAll();
 
+    // Financial & Operational Analytics (Issue #25)
+    $todayRevenueStmt = $pdo->query("SELECT COALESCE(SUM(grand_total), 0) as total_revenue, COALESCE(SUM(consultation_fee), 0) as consultation_total, COALESCE(SUM(medicines_total), 0) as pharmacy_total FROM `prescriptions` WHERE DATE(`created_at`) = CURDATE()");
+    $todayRevenue = $todayRevenueStmt->fetch();
+
+    $monthlyRevenue = $pdo->query("SELECT COALESCE(SUM(grand_total), 0) FROM `prescriptions` WHERE MONTH(`created_at`) = MONTH(CURDATE()) AND YEAR(`created_at`) = YEAR(CURDATE())")->fetchColumn();
+
     echo json_encode([
         'status' => 'success',
         'data' => [
@@ -25,6 +31,10 @@ try {
             'today_prescriptions' => (int)$today_prescriptions,
             'total_prescriptions' => (int)$total_prescriptions,
             'total_medicines' => (int)$total_medicines,
+            'today_revenue' => floatval($todayRevenue['total_revenue']),
+            'today_consultation_total' => floatval($todayRevenue['consultation_total']),
+            'today_pharmacy_total' => floatval($todayRevenue['pharmacy_total']),
+            'monthly_revenue' => floatval($monthlyRevenue),
             'recent_prescriptions' => $recent
         ]
     ]);
