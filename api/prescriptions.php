@@ -191,6 +191,16 @@ if ($method === 'POST') {
                 $iTotal,
                 $itemSource
             ]);
+
+            // Atomic Inventory Stock Deduction Guard (Issue #10)
+            if ($itemSource === 'clinic') {
+                $rawQty = trim($item['quantity'] ?? '');
+                $numericQty = intval(preg_replace('/[^0-9]/', '', $rawQty));
+                if ($numericQty <= 0) $numericQty = 1;
+
+                $stockStmt = $pdo->prepare("UPDATE `medicines` SET `stock_qty` = GREATEST(0, `stock_qty` - ?) WHERE `name` = ?");
+                $stockStmt->execute([$numericQty, trim($item['medicine_name'] ?? '')]);
+            }
         }
 
         // Mark today's active queue item as Completed for this doctor and patient
