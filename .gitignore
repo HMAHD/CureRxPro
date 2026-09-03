@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist_app/
+
+# macOS / System files
+.DS_Store
+Thumbs.db
+*.tmp

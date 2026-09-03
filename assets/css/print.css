@@ -1,0 +1,545 @@
+/* assets/css/print.css - Precision Printable Template Engine (A4, A5, Thermal 80mm) */
+
+/* On-screen Print Preview Modal Styles */
+@media screen {
+  .print-modal-body {
+    background: #e2e8f0;
+    padding: 24px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+
+  .print-prescription-doc {
+    background: #ffffff;
+    color: #000000;
+    padding: 24px;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    font-family: 'Plus Jakarta Sans', 'Noto Sans Sinhala', Arial, sans-serif;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+
+  .paper-size-A4 {
+    width: 210mm;
+    min-height: 297mm;
+  }
+
+  .paper-size-A5 {
+    width: 148mm;
+    min-height: 210mm;
+  }
+
+  /* Thermal 80mm Screen Preview */
+  .paper-size-Thermal {
+    width: 78mm !important;
+    min-height: 120mm;
+    padding: 12px 10px !important;
+    font-size: 9.5pt !important;
+    line-height: 1.35;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 !important;
+  }
+}
+
+/* Printer Output Rules (@media print) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .app-sidebar, .app-main, .top-header, .glass-card, .modal-overlay, .modal-header, .no-print {
+    display: none !important;
+  }
+
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+
+  /* Strip browser headers & footers (URL, page numbers, date) */
+  @page {
+    margin: 0mm !important;
+  }
+
+  #print-area {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Plus Jakarta Sans', 'Noto Sans Sinhala', Arial, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* A4 Print Size */
+  body.print-size-A4 #print-area {
+    width: 210mm;
+    padding: 12mm;
+  }
+  body.print-size-A4 @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  /* A5 Print Size */
+  body.print-size-A5 #print-area {
+    width: 148mm;
+    padding: 8mm;
+  }
+  body.print-size-A5 @page {
+    size: A5 portrait;
+    margin: 5mm;
+  }
+
+  /* THERMAL 80mm PRINT SIZE */
+  body.print-size-Thermal #print-area {
+    width: 74mm !important;
+    padding: 2mm 3mm !important;
+    box-sizing: border-box !important;
+    font-size: 9.5pt !important;
+    line-height: 1.3 !important;
+    color: #000000 !important;
+  }
+  body.print-size-Thermal @page {
+    margin: 0mm !important;
+  }
+}
+
+/* -------------------------------------------------------------
+   DOCUMENT STRUCTURE & STYLING (Standard A4 / A5)
+   ------------------------------------------------------------- */
+.print-prescription-doc, .print-prescription-doc * {
+  box-sizing: border-box !important;
+}
+.print-prescription-doc {
+  color: #000000;
+}
+
+/* By default, thermal-only block is hidden on A4/A5 */
+.thermal-header-block {
+  display: none;
+}
+
+/* By default, standard-only blocks are visible on A4/A5 — flex item, not block */
+.standard-only {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.doctor-info h2 {
+  font-size: 16pt;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.doctor-info p {
+  font-size: 9.5pt;
+  color: #000000;
+  margin: 1px 0;
+  font-weight: 600;
+}
+
+.doctor-info {
+  flex: 1 1 auto;
+}
+
+.clinic-info {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 9pt;
+  color: #000000;
+  max-width: 45%;
+}
+
+.clinic-info h3 {
+  font-size: 12pt;
+  color: #000000;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+/* Patient Demographics Bar */
+.print-patient-bar {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 4px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  font-size: 9.5pt;
+  margin-bottom: 14px;
+}
+
+.print-patient-bar div {
+  display: flex;
+  flex-direction: column;
+}
+
+.print-patient-bar label {
+  font-size: 7.5pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+.print-patient-bar span {
+  font-weight: 700;
+  color: #000000;
+}
+
+/* Vitals & Clinical Notes */
+.print-vitals-row {
+  display: flex;
+  gap: 14px;
+  font-size: 9pt;
+  border: 1px solid #000000;
+  padding: 5px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.print-clinical-notes {
+  margin-bottom: 12px;
+  font-size: 9.5pt;
+  color: #000000;
+}
+
+.print-clinical-notes p {
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+/* Rx Symbol & Medicines Table */
+.rx-symbol {
+  font-size: 24pt;
+  font-weight: 900;
+  font-family: 'Times New Roman', serif;
+  color: #000000;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.print-med-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+.print-med-table th {
+  border-bottom: 2px solid #000000;
+  text-align: left;
+  padding: 6px 4px;
+  font-size: 9pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+.print-med-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 6px 4px;
+  font-size: 9.5pt;
+  vertical-align: top;
+  color: #000000;
+}
+
+.med-name-cell {
+  font-weight: 800;
+  color: #000000;
+}
+
+.med-instruction-cell {
+  color: #000000;
+  font-weight: 700;
+  font-size: 9pt;
+}
+
+/* Footer & Doctor Signature */
+.print-footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid #000000;
+  padding-top: 12px;
+}
+
+.print-advice-box {
+  max-width: 65%;
+  font-size: 9pt;
+  color: #000000;
+}
+
+.print-advice-box h4 {
+  font-size: 9.5pt;
+  color: #000000;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.signature-box {
+  text-align: center;
+  width: 160px;
+}
+
+.signature-line {
+  border-top: 1px dashed #000000;
+  margin-top: 30px;
+  padding-top: 4px;
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #000000;
+}
+
+
+/* -------------------------------------------------------------
+   SPECIAL THERMAL RECEIPT (80mm POS PRINTER) PERFECT ALIGNMENTS
+   ------------------------------------------------------------- */
+.paper-size-Thermal {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Sinhala', Arial, sans-serif !important;
+  color: #000000 !important;
+}
+
+/* On Thermal: hide the A4/A5 side-by-side blocks, show the thermal centered block */
+.paper-size-Thermal .standard-only {
+  display: none !important;
+}
+
+.paper-size-Thermal .thermal-header-block {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+/* Thermal Header Block - Doctor Info (Centered) */
+.paper-size-Thermal .thermal-doctor-name {
+  font-size: 13pt !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+  margin-bottom: 2px !important;
+}
+
+.paper-size-Thermal .thermal-qualifications {
+  font-size: 8.5pt !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  margin: 1px 0 !important;
+}
+
+.paper-size-Thermal .thermal-slmc {
+  font-size: 8pt !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  margin: 1px 0 !important;
+}
+
+.paper-size-Thermal .thermal-divider {
+  border-top: 1px dashed #000000 !important;
+  margin: 5px 0 !important;
+}
+
+.paper-size-Thermal .thermal-clinic-name {
+  font-size: 11pt !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  margin-bottom: 2px !important;
+}
+
+.paper-size-Thermal .thermal-clinic-address,
+.paper-size-Thermal .thermal-clinic-phone {
+  font-size: 8.5pt !important;
+  text-align: center !important;
+  margin: 1px 0 !important;
+}
+
+/* 1. Header Outer Container */
+.paper-size-Thermal .print-header {
+  display: block !important;
+  border-bottom: 2px dashed #000000 !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+
+
+/* 2. Patient Demographics Block Layout */
+.paper-size-Thermal .print-patient-bar {
+  display: block !important;
+  font-size: 8.5pt !important;
+  border: 1px dashed #000000 !important;
+  padding: 6px 8px !important;
+  margin-bottom: 8px !important;
+  background: transparent !important;
+  line-height: 1.4 !important;
+}
+
+.paper-size-Thermal .print-patient-bar div {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  margin-bottom: 2px !important;
+  border-bottom: 1px dotted #ccc !important;
+  padding-bottom: 2px !important;
+}
+
+.paper-size-Thermal .print-patient-bar div:last-child {
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+}
+
+.paper-size-Thermal .print-patient-bar label {
+  font-size: 8pt !important;
+  font-weight: 800 !important;
+  color: #000000 !important;
+}
+
+.paper-size-Thermal .print-patient-bar span {
+  font-size: 8.5pt !important;
+  font-weight: 700 !important;
+  text-align: right !important;
+}
+
+/* 3. Vitals & Diagnosis */
+.paper-size-Thermal .print-vitals-row {
+  font-size: 8.5pt !important;
+  border: 1px dashed #000000 !important;
+  padding: 4px 6px !important;
+  margin-bottom: 6px !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+
+.paper-size-Thermal .print-clinical-notes {
+  font-size: 9pt !important;
+  border-bottom: 1px dashed #000000 !important;
+  padding-bottom: 4px !important;
+  margin-bottom: 6px !important;
+}
+
+/* 4. Medicines Table Alignment */
+.paper-size-Thermal .rx-symbol {
+  font-size: 18pt !important;
+  font-weight: 900 !important;
+  margin-bottom: 2px !important;
+}
+
+.paper-size-Thermal .print-med-table {
+  margin-bottom: 8px !important;
+  width: 100% !important;
+}
+
+.paper-size-Thermal .print-med-table th {
+  font-size: 8pt !important;
+  font-weight: 900 !important;
+  border-bottom: 2px solid #000000 !important;
+  padding: 3px 2px !important;
+}
+
+.paper-size-Thermal .print-med-table td {
+  font-size: 8.5pt !important;
+  border-bottom: 1px dashed #666666 !important;
+  padding: 4px 2px !important;
+}
+
+.paper-size-Thermal .print-med-table td:last-child {
+  white-space: nowrap !important;
+}
+
+.paper-size-Thermal .med-name-cell {
+  font-size: 9pt !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+.paper-size-Thermal .med-instruction-cell {
+  font-size: 8pt !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+/* Pharmacy Outside Section */
+.paper-size-Thermal .print-pharmacy-section {
+  margin-top: 8px !important;
+  border-top: 2px dashed #000000 !important;
+  padding-top: 6px !important;
+  margin-bottom: 8px !important;
+}
+
+/* 5. Bill Summary Box Left-Right Justified Alignment */
+.paper-size-Thermal .print-bill-summary-box {
+  border-top: 2px dashed #000000 !important;
+  margin-top: 6px !important;
+  padding-top: 6px !important;
+  font-size: 9pt !important;
+}
+
+.paper-size-Thermal .print-bill-summary-box table {
+  width: 100% !important;
+}
+
+.paper-size-Thermal .print-bill-summary-box td {
+  padding: 3px 0 !important;
+  font-size: 9pt !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.paper-size-Thermal .print-bill-summary-box tr.net-total-row td {
+  font-size: 11.5pt !important;
+  font-weight: 900 !important;
+  color: #000000 !important;
+  border-top: 2px solid #000000 !important;
+  border-bottom: 2px double #000000 !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* 6. Footer & Signature Centered */
+.paper-size-Thermal .print-footer {
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  border-top: 1px dashed #000000 !important;
+  margin-top: 10px !important;
+  padding-top: 6px !important;
+}
+
+.paper-size-Thermal .print-advice-box {
+  max-width: 100% !important;
+  text-align: center !important;
+  margin-bottom: 8px !important;
+  font-size: 8.5pt !important;
+}
+
+.paper-size-Thermal .signature-box {
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.paper-size-Thermal .signature-line {
+  margin-top: 16px !important;
+  font-size: 8pt !important;
+  font-weight: 700 !important;
+}
