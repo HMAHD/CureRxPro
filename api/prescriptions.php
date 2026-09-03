@@ -106,17 +106,34 @@ if ($method === 'GET') {
         $params[] = intval($doctor_filter);
     }
 
-    if (!empty($conditions)) {
-        $query .= " WHERE " . implode(" AND ", $conditions);
-    }
+    $page = max(1, intval($_GET['page'] ?? 1));
+    $limit = max(5, min(100, intval($_GET['limit'] ?? 20)));
+    $offset = ($page - 1) * $limit;
 
-    $query .= " ORDER BY p.id DESC LIMIT 50";
+    $countQuery = "SELECT COUNT(*) FROM `prescriptions` p JOIN `patients` pt ON p.patient_id = pt.id";
+    if (!empty($conditions)) {
+        $countQuery .= " WHERE " . implode(" AND ", $conditions);
+    }
+    $countStmt = $pdo->prepare($countQuery);
+    $countStmt->execute($params);
+    $totalRecords = (int)$countStmt->fetchColumn();
+
+    $query .= " ORDER BY p.id DESC LIMIT $limit OFFSET $offset";
 
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
 
     $prescriptions = $stmt->fetchAll();
-    echo json_encode(['status' => 'success', 'data' => $prescriptions]);
+    echo json_encode([
+        'status' => 'success',
+        'data' => $prescriptions,
+        'pagination' => [
+            'total_records' => $totalRecords,
+            'page' => $page,
+            'limit' => $limit,
+            'total_pages' => max(1, ceil($totalRecords / $limit))
+        ]
+    ]);
     exit;
 }
 

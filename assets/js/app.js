@@ -1677,19 +1677,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Load Prescriptions History Table
-  async function loadPrescriptionsHistory() {
+  // Patient EMR History Archive Pagination System (Issue #23)
+  let historyCurrentPage = 1;
+  const historyPageLimit = 15;
+
+  async function loadPrescriptionsHistory(page = historyCurrentPage) {
     const tbody = document.getElementById('tbody-history');
     if (!tbody) return;
 
+    historyCurrentPage = page;
     const filterVal = document.getElementById('history-doctor-filter')?.value || 'all';
 
     try {
-      const res = await fetch(`api/prescriptions.php?doctor_id=${filterVal}`);
+      const res = await fetch(`api/prescriptions.php?doctor_id=${filterVal}&page=${historyCurrentPage}&limit=${historyPageLimit}`);
       const json = await res.json();
 
       if (json.status === 'success') {
-        if (json.data.length === 0) {
+        if (!json.data || json.data.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No prescriptions created yet.</td></tr>`;
+          updateHistoryPaginationUI(0, 1, 1);
           return;
         }
 
@@ -1707,6 +1713,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>
         `).join('');
 
+        const p = json.pagination || { total_records: json.data.length, page: 1, total_pages: 1 };
+        updateHistoryPaginationUI(p.total_records, p.page, p.total_pages);
+
         tbody.querySelectorAll('.btn-print-history').forEach(btn => {
           btn.addEventListener('click', () => {
             const rxId = btn.getAttribute('data-id');
@@ -1719,7 +1728,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm('Are you sure you want to delete this prescription record?')) {
               const rxId = btn.getAttribute('data-id');
               await fetch(`api/prescriptions.php?id=${rxId}`, { method: 'DELETE' });
-              loadPrescriptionsHistory();
+              loadPrescriptionsHistory(historyCurrentPage);
               loadStats();
             }
           });
@@ -1727,6 +1736,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  function updateHistoryPaginationUI(total, page, totalPages) {
+    const info = document.getElementById('history-pagination-info');
+    const btnPrev = document.getElementById('btn-history-prev');
+    const btnNext = document.getElementById('btn-history-next');
+
+    if (info) info.textContent = `Page ${page} of ${totalPages} (Total ${total} Records)`;
+
+    if (btnPrev) {
+      btnPrev.disabled = (page <= 1);
+      btnPrev.onclick = () => { if (page > 1) loadPrescriptionsHistory(page - 1); };
+    }
+
+    if (btnNext) {
+      btnNext.disabled = (page >= totalPages);
+      btnNext.onclick = () => { if (page < totalPages) loadPrescriptionsHistory(page + 1); };
     }
   }
 

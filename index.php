@@ -562,6 +562,15 @@ if (file_exists($configPath)) {
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls (Issue #23) -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px solid var(--border-subtle);">
+          <div style="font-size:12.5px; color:var(--text-muted); font-weight:700;" id="history-pagination-info">Showing page 1 of 1</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline btn-sm" id="btn-history-prev" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+            <button class="btn btn-outline btn-sm" id="btn-history-next" disabled>Next <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
       </div>
     </section>
 
