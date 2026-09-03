@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPatientSearch();
   initRxTable();
   initKeyboardShortcuts();
+  initPediatricCalculator();
   initModals();
   loadPrescriptionsHistory();
   loadPatientsList();
@@ -181,6 +182,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
+  }
+
+  // Pediatric Body-Weight Dosage Calculator (Issue #7)
+  function initPediatricCalculator() {
+    const btnCalc = document.getElementById('btn-pediatric-calc');
+    const modal = document.getElementById('modal-pediatric-calc');
+    const weightInp = document.getElementById('ped-weight-in');
+    const drugSelect = document.getElementById('ped-drug-select');
+    const doseMlEl = document.getElementById('ped-calc-dose-ml');
+    const detailsEl = document.getElementById('ped-calc-details');
+    const btnApply = document.getElementById('btn-apply-ped-dose');
+
+    if (!btnCalc || !modal) return;
+
+    let calculatedData = null;
+
+    btnCalc.addEventListener('click', () => {
+      const ptWeight = document.getElementById('vitals-weight')?.value.trim();
+      if (ptWeight && !isNaN(parseFloat(ptWeight))) {
+        weightInp.value = parseFloat(ptWeight);
+      }
+      calculateDose();
+      modal.classList.add('active');
+    });
+
+    function calculateDose() {
+      const weight = parseFloat(weightInp.value) || 10;
+      const drug = drugSelect.value;
+
+      let medName = 'Paracetamol Syrup';
+      let strength = '120mg/5ml';
+      let mgPerKg = 15;
+      let mgPer5ml = 120;
+      let freq = '3-4 times daily after meals';
+      let dosageCode = '7.5ml tds (1-1-1)';
+      let instruction = i18n.t('ins_after_meals') || 'කෑමට පසු (After meals)';
+
+      if (drug === 'paracetamol_120') {
+        medName = 'Paracetamol Syrup';
+        strength = '120mg/5ml';
+        mgPerKg = 15;
+        mgPer5ml = 120;
+        freq = '3-4 times daily after meals';
+        dosageCode = 'tds (1-1-1)';
+      } else if (drug === 'paracetamol_250') {
+        medName = 'Paracetamol Syrup (Fort)';
+        strength = '250mg/5ml';
+        mgPerKg = 15;
+        mgPer5ml = 250;
+        freq = '3-4 times daily after meals';
+        dosageCode = 'tds (1-1-1)';
+      } else if (drug === 'amoxicillin_125') {
+        medName = 'Amoxicillin Syrup';
+        strength = '125mg/5ml';
+        mgPerKg = 15;
+        mgPer5ml = 125;
+        freq = '3 times daily after meals';
+        dosageCode = 'tds (1-1-1)';
+      } else if (drug === 'amoxicillin_250') {
+        medName = 'Amoxicillin Syrup (Fort)';
+        strength = '250mg/5ml';
+        mgPerKg = 15;
+        mgPer5ml = 250;
+        freq = '3 times daily after meals';
+        dosageCode = 'tds (1-1-1)';
+      } else if (drug === 'ibuprofen_100') {
+        medName = 'Ibuprofen Syrup';
+        strength = '100mg/5ml';
+        mgPerKg = 10;
+        mgPer5ml = 100;
+        freq = '3 times daily after meals';
+        dosageCode = 'tds (1-1-1)';
+      } else if (drug === 'cetirizine_5') {
+        medName = 'Cetirizine Syrup';
+        strength = '5mg/5ml';
+        mgPerKg = 0.25;
+        mgPer5ml = 5;
+        freq = 'Once daily at night';
+        dosageCode = 'nocte (0-0-1)';
+        instruction = i18n.t('ins_at_night') || 'රාත්‍රියට කෑමට පසු (Night, after meals)';
+      } else if (drug === 'domperidone_5') {
+        medName = 'Domperidone Syrup';
+        strength = '5mg/5ml';
+        mgPerKg = 0.25;
+        mgPer5ml = 5;
+        freq = '3 times daily before meals';
+        dosageCode = 'tds (1-1-1)';
+        instruction = i18n.t('ins_before_meals') || 'කෑමට පැය භාගයකට පෙර (Before meals)';
+      }
+
+      const totalMg = weight * mgPerKg;
+      const volumeMl = (totalMg / mgPer5ml) * 5;
+      const roundedMl = (Math.round(volumeMl * 2) / 2).toFixed(1);
+
+      doseMlEl.textContent = `${roundedMl} ml per dose`;
+      detailsEl.textContent = `Target dose: ${totalMg.toFixed(1)} mg (${mgPerKg} mg/kg for ${weight} kg child) | ${freq}`;
+
+      calculatedData = {
+        medicine_name: medName,
+        strength: strength,
+        dosage: `${roundedMl} ml ${dosageCode}`,
+        instruction: instruction,
+        duration: '3 Days',
+        quantity: '1 Bottle',
+        item_source: 'clinic',
+        unit_price: 250.00,
+        item_total: 250.00
+      };
+    }
+
+    if (weightInp) weightInp.addEventListener('input', calculateDose);
+    if (drugSelect) drugSelect.addEventListener('change', calculateDose);
+
+    if (btnApply) {
+      btnApply.addEventListener('click', () => {
+        if (calculatedData) {
+          addRxRow(calculatedData);
+          recalculateGrandTotal();
+          modal.classList.remove('active');
+        }
+      });
+    }
   }
 
   // Navigation Logic
