@@ -629,6 +629,26 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     badge.style.display = 'flex';
 
+    // Render High-Priority Allergy Alert Banner (Issue #6)
+    const allergyContainer = document.getElementById('patient-allergy-alert-container');
+    if (allergyContainer) {
+      if (p.allergies && p.allergies.trim() !== '') {
+        allergyContainer.innerHTML = `
+          <div class="allergy-alert-banner">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;"></i>
+            <div>
+              <strong>HIGH PATIENT ALLERGY WARNING:</strong>
+              <div style="font-weight:600; font-size:12.5px; margin-top:2px;">Known Allergies / Reactions: ${escapeHtml(p.allergies)}</div>
+            </div>
+          </div>
+        `;
+        allergyContainer.style.display = 'block';
+      } else {
+        allergyContainer.innerHTML = '';
+        allergyContainer.style.display = 'none';
+      }
+    }
+
     document.getElementById('btn-view-pt-history')?.addEventListener('click', () => {
       openPatientHistoryModal(p.id);
     });
@@ -637,6 +657,10 @@ document.addEventListener('DOMContentLoaded', () => {
       state.selectedPatient = null;
       document.getElementById('selected-patient-id').value = '';
       badge.style.display = 'none';
+      if (allergyContainer) {
+        allergyContainer.innerHTML = '';
+        allergyContainer.style.display = 'none';
+      }
     });
 
     // Check if patient has last prescription in the background (Non-blocking UI)

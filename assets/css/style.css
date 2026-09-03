@@ -608,3 +608,24 @@ textarea.form-control {
 #print-area {
   display: none;
 }
+
+/* High-Contrast Allergy Warning Banner (Issue #6) */
+.allergy-alert-banner {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+  border: 1px solid #f87171;
+  color: #fef2f2;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  animation: alertPulse 2s infinite alternate;
+}
+
+@keyframes alertPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  100% { box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.7); }
+}

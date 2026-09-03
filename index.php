@@ -224,6 +224,9 @@ if (file_exists($configPath)) {
         <!-- Right Panel: Rx Medicine Builder & Action -->
         <div class="right-panel">
           
+          <!-- High-Priority Allergy Alert Banner Container (Issue #6) -->
+          <div id="patient-allergy-alert-container" style="display:none;"></div>
+
           <!-- Chief Complaints & Diagnosis -->
           <div class="glass-card">
             <div class="card-title">
