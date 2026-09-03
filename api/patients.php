@@ -63,8 +63,11 @@ if ($method === 'POST') {
         $stmt->execute([$name, $age, $gender, $phone, $address, $allergies, $blood_group, $id]);
         echo json_encode(['status' => 'success', 'message' => 'Patient details updated successfully', 'patient_id' => $id]);
     } else {
-        // Create new patient
-        $patient_code = 'P-' . strtoupper(substr(uniqid(), -6));
+        // Generate atomic sequential patient code (Issue #20)
+        $maxStmt = $pdo->query("SELECT COALESCE(MAX(`id`), 0) + 1 FROM `patients`");
+        $nextId = $maxStmt->fetchColumn();
+        $patient_code = 'PAT-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
+
         $stmt = $pdo->prepare("INSERT INTO `patients` (`patient_code`, `name`, `age`, `gender`, `phone`, `address`, `allergies`, `blood_group`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$patient_code, $name, $age, $gender, $phone, $address, $allergies, $blood_group]);
         $newId = $pdo->lastInsertId();
