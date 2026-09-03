@@ -1,26 +1,32 @@
 <?php
-// api/backup.php - 1-Click Complete Database Backup & Restore API
+// api/backup.php - 1-Click Complete Database Backup & Safety Restore API
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/auth_check.php';
 verify_api_request();
 
+function generate_full_backup($pdo) {
+    return [
+        'version' => '2.5.0',
+        'exported_at' => date('Y-m-d H:i:s'),
+        'settings' => $pdo->query("SELECT * FROM `settings`")->fetchAll(),
+        'doctors' => $pdo->query("SELECT * FROM `doctors`")->fetchAll(),
+        'patients' => $pdo->query("SELECT * FROM `patients`")->fetchAll(),
+        'medicines' => $pdo->query("SELECT * FROM `medicines`")->fetchAll(),
+        'templates' => $pdo->query("SELECT * FROM `templates`")->fetchAll(),
+        'template_items' => $pdo->query("SELECT * FROM `template_items`")->fetchAll(),
+        'prescriptions' => $pdo->query("SELECT * FROM `prescriptions`")->fetchAll(),
+        'prescription_items' => $pdo->query("SELECT * FROM `prescription_items`")->fetchAll(),
+        'waiting_queue' => $pdo->query("SELECT * FROM `waiting_queue`")->fetchAll(),
+        'channeling_bills' => $pdo->query("SELECT * FROM `channeling_bills`")->fetchAll()
+    ];
+}
+
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 
 if ($action === 'export') {
     try {
-        $backup = [
-            'version' => '2.5.0',
-            'exported_at' => date('Y-m-d H:i:s'),
-            'settings' => $pdo->query("SELECT * FROM `settings`")->fetchAll(),
-            'patients' => $pdo->query("SELECT * FROM `patients`")->fetchAll(),
-            'medicines' => $pdo->query("SELECT * FROM `medicines`")->fetchAll(),
-            'templates' => $pdo->query("SELECT * FROM `templates`")->fetchAll(),
-            'template_items' => $pdo->query("SELECT * FROM `template_items`")->fetchAll(),
-            'prescriptions' => $pdo->query("SELECT * FROM `prescriptions`")->fetchAll(),
-            'prescription_items' => $pdo->query("SELECT * FROM `prescription_items`")->fetchAll()
-        ];
-
+        $backup = generate_full_backup($pdo);
         $filename = 'CureRx_Pro_Backup_' . date('Y-m-d_His') . '.json';
         header('Content-Type: application/json');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -42,8 +48,25 @@ if ($action === 'import') {
         $fileContent = file_get_contents($_FILES['backup_file']['tmp_name']);
         $data = json_decode($fileContent, true);
 
-        if (!$data || !isset($data['medicines'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid backup file format.']);
+        if (!$data || !is_array($data) || (!isset($data['medicines']) && !isset($data['patients']))) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid backup file format. Essential database structure missing.']);
+            exit;
+        }
+
+        // --- SAFETY SNAPSHOT FEATURE (SEC-02) ---
+        // Generate an automatic pre-restore safety backup file before truncating tables
+        $userDataPath = getenv('USER_DATA_PATH');
+        $backupDir = $userDataPath ? $userDataPath . '/backups' : __DIR__ . '/../backups';
+        if (!is_dir($backupDir)) {
+            @mkdir($backupDir, 0755, true);
+        }
+
+        $safetySnapshot = generate_full_backup($pdo);
+        $safetyFilename = $backupDir . '/pre_restore_safety_' . date('Ymd_His') . '.json';
+        $saved = @file_put_contents($safetyFilename, json_encode($safetySnapshot, JSON_PRETTY_PRINT));
+        
+        if ($saved === false) {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to create safety pre-restore backup snapshot. Restore aborted for security.']);
             exit;
         }
 
@@ -51,12 +74,23 @@ if ($action === 'import') {
         $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
 
         // Clear existing tables
+        $pdo->exec("TRUNCATE TABLE `channeling_bills`;");
+        $pdo->exec("TRUNCATE TABLE `waiting_queue`;");
         $pdo->exec("TRUNCATE TABLE `prescription_items`;");
         $pdo->exec("TRUNCATE TABLE `prescriptions`;");
         $pdo->exec("TRUNCATE TABLE `template_items`;");
         $pdo->exec("TRUNCATE TABLE `templates`;");
         $pdo->exec("TRUNCATE TABLE `medicines`;");
         $pdo->exec("TRUNCATE TABLE `patients`;");
+        $pdo->exec("TRUNCATE TABLE `doctors`;");
+
+        // Restore Doctors
+        if (!empty($data['doctors'])) {
+            $stmt = $pdo->prepare("INSERT INTO `doctors` (`id`, `name`, `qualifications`, `slmc_reg`, `created_at`) VALUES (?, ?, ?, ?, ?)");
+            foreach ($data['doctors'] as $d) {
+                $stmt->execute([$d['id'], $d['name'], $d['qualifications'] ?? '', $d['slmc_reg'] ?? '', $d['created_at'] ?? date('Y-m-d H:i:s')]);
+            }
+        }
 
         // Restore Patients
         if (!empty($data['patients'])) {
@@ -125,10 +159,33 @@ if ($action === 'import') {
             }
         }
 
+        // Restore Waiting Queue
+        if (!empty($data['waiting_queue'])) {
+            $stmt = $pdo->prepare("INSERT INTO `waiting_queue` (`id`, `patient_id`, `doctor_id`, `token_number`, `status`, `created_at`) VALUES (?, ?, ?, ?, ?, ?)");
+            foreach ($data['waiting_queue'] as $q) {
+                $stmt->execute([$q['id'], $q['patient_id'], $q['doctor_id'], $q['token_number'], $q['status'] ?? 'Waiting', $q['created_at'] ?? date('Y-m-d H:i:s')]);
+            }
+        }
+
+        // Restore Channeling Bills
+        if (!empty($data['channeling_bills'])) {
+            $stmt = $pdo->prepare("INSERT INTO `channeling_bills` (`id`, `bill_number`, `patient_id`, `doctor_id`, `token_number`, `doctor_fee`, `hospital_fee`, `total_amount`, `payment_status`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            foreach ($data['channeling_bills'] as $cb) {
+                $stmt->execute([
+                    $cb['id'], $cb['bill_number'], $cb['patient_id'], $cb['doctor_id'], $cb['token_number'],
+                    $cb['doctor_fee'] ?? 0.00, $cb['hospital_fee'] ?? 0.00, $cb['total_amount'] ?? 0.00, $cb['payment_status'] ?? 'Paid', $cb['created_at'] ?? date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+
         $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
         $pdo->commit();
 
-        echo json_encode(['status' => 'success', 'message' => 'Database successfully restored from backup!']);
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Database successfully restored from backup! Safety snapshot created.',
+            'safety_snapshot' => basename($safetyFilename)
+        ]);
         exit;
     } catch (\Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
