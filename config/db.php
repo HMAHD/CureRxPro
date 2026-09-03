@@ -139,6 +139,12 @@ function init_tables($pdo) {
         `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
+    // Full-Text & Search Performance Indexes (Issue #11)
+    try { $pdo->exec("CREATE INDEX `idx_patient_code` ON `patients` (`patient_code`);"); } catch (\PDOException $e) {}
+    try { $pdo->exec("CREATE INDEX `idx_patient_phone` ON `patients` (`phone`);"); } catch (\PDOException $e) {}
+    try { $pdo->exec("CREATE FULLTEXT INDEX `idx_patient_search` ON `patients` (`name`, `phone`, `patient_code`);"); } catch (\PDOException $e) {}
+    try { $pdo->exec("CREATE FULLTEXT INDEX `idx_medicine_search` ON `medicines` (`name`, `generic_name`);"); } catch (\PDOException $e) {}
+
     // Check if medicines table is empty, insert default Sri Lankan medicine templates if empty
     $medCount = $pdo->query("SELECT COUNT(*) FROM `medicines`")->fetchColumn();
     if ($medCount == 0) {
