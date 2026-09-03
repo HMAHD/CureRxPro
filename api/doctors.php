@@ -31,6 +31,11 @@ if ($method === 'POST') {
         exit;
     }
 
+    if (!empty($slmc_reg) && !preg_match('/^(SLMC[- ]?)?\d{4,6}$/i', $slmc_reg)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid SLMC registration number format. Must be 4 to 6 digits (e.g. SLMC-34821 or 34821).']);
+        exit;
+    }
+
     try {
         if ($id) {
             // Edit existing doctor
