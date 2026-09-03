@@ -50,7 +50,16 @@ if ($method === 'POST') {
         $testPdo = null;
 
         if ($action === 'test') {
-            echo json_encode(['status' => 'success', 'message' => 'Connection successful!']);
+            $startTime = microtime(true);
+            $testPdo->query("SELECT 1;");
+            $latency = round((microtime(true) - $startTime) * 1000, 2);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => "Connection successful! (LAN Latency: {$latency} ms)",
+                'latency_ms' => $latency,
+                'server_host' => $host
+            ]);
             exit;
         }
     } catch (\Exception $e) {
