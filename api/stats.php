@@ -2,6 +2,8 @@
 // api/stats.php - Dashboard Quick Stats API
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/auth_check.php';
+verify_api_request();
 
 try {
     $total_patients = $pdo->query("SELECT COUNT(*) FROM `patients`")->fetchColumn();

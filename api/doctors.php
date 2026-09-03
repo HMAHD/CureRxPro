@@ -2,6 +2,8 @@
 // api/doctors.php - Manage multiple doctor profiles for channeling centers
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/auth_check.php';
+verify_api_request();
 
 $method = $_SERVER['REQUEST_METHOD'];
 

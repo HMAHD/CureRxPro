@@ -2,6 +2,8 @@
 // api/backup.php - 1-Click Complete Database Backup & Restore API
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/auth_check.php';
+verify_api_request();
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 

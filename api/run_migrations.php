@@ -1,8 +1,9 @@
 <?php
 // api/run_migrations.php - Unified Database Migration Engine for CureRxPro
 header('Content-Type: application/json');
-
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/auth_check.php';
+verify_api_request();
 
 try {
     // 1. Create schema_migrations tracking table
