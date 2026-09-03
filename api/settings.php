@@ -164,9 +164,13 @@ if ($method === 'POST') {
     $clinic_name = trim($data['clinic_name'] ?? '');
     $clinic_address = trim($data['clinic_address'] ?? '');
     $clinic_phone = trim($data['clinic_phone'] ?? '');
+    $clinic_logo = trim($data['clinic_logo'] ?? '');
     $print_paper_size = trim($data['print_paper_size'] ?? 'A5');
     $default_language = trim($data['default_language'] ?? 'bilingual');
     $practice_mode = trim($data['practice_mode'] ?? 'dispensary');
+
+    // Ensure clinic_logo column exists
+    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `clinic_logo` LONGTEXT NULL"); } catch (\PDOException $e) {}
 
     $stmt = $pdo->prepare("UPDATE `settings` SET 
         `doctor_name` = ?, 
@@ -175,6 +179,7 @@ if ($method === 'POST') {
         `clinic_name` = ?, 
         `clinic_address` = ?, 
         `clinic_phone` = ?, 
+        `clinic_logo` = ?,
         `print_paper_size` = ?, 
         `default_language` = ?,
         `practice_mode` = ?
@@ -182,7 +187,7 @@ if ($method === 'POST') {
 
     $stmt->execute([
         $doctor_name, $qualifications, $slmc_reg, $clinic_name,
-        $clinic_address, $clinic_phone, $print_paper_size, $default_language,
+        $clinic_address, $clinic_phone, $clinic_logo, $print_paper_size, $default_language,
         $practice_mode
     ]);
 

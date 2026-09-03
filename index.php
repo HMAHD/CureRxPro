@@ -621,7 +621,9 @@ if (file_exists($configPath)) {
               <select class="form-control" id="set-practice-mode" style="font-weight:700;">
                 <option value="dispensary" data-i18n="opt_mode_dispensary">🏥 In-House Dispensary with Billing (ඩිස්පෙන්සරි)</option>
                 <option value="channeling" data-i18n="opt_mode_channeling">🩺 Channeling / Pharmacy Rx Only (චැනලින් / ෆාමසි)</option>
-              </select>
+            <div class="form-group">
+              <label>Custom Clinic Logo (Image URL / Base64)</label>
+              <input type="text" class="form-control" id="set-clinic-logo" placeholder="e.g. https://example.com/logo.png or data:image/png;base64,...">
             </div>
 
             <button type="submit" class="btn btn-primary" style="margin-top: 10px;">

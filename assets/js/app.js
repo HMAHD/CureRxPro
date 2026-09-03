@@ -371,6 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('set-practice-mode')) {
       document.getElementById('set-practice-mode').value = s.practice_mode || 'dispensary';
     }
+    if (document.getElementById('set-clinic-logo')) {
+      document.getElementById('set-clinic-logo').value = s.clinic_logo || '';
+    }
 
     // Apply practice mode to Rx Builder toggle
     const chkBill = document.getElementById('chk-include-bill');
@@ -654,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clinic_name: document.getElementById('set-clinic-name').value,
         clinic_address: document.getElementById('set-clinic-address').value,
         clinic_phone: document.getElementById('set-clinic-phone').value,
+        clinic_logo: document.getElementById('set-clinic-logo')?.value || '',
         print_paper_size: document.getElementById('set-paper-size').value,
         practice_mode: document.getElementById('set-practice-mode')?.value || 'dispensary'
       };
@@ -1202,6 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p>SLMC Reg No: ${escapeHtml(s.slmc_reg || '')}</p>
           </div>
           <div class="clinic-info standard-only">
+            ${s.clinic_logo ? `<img src="${escapeHtml(s.clinic_logo)}" style="max-height:45px; max-width:120px; object-fit:contain; margin-bottom:4px;" alt="Clinic Logo">` : ''}
             <h3>${escapeHtml(s.clinic_name || 'Clinic Name')}</h3>
             <p>${escapeHtml(s.clinic_address || '')}</p>
             <p>Tel: ${escapeHtml(s.clinic_phone || '')}</p>
