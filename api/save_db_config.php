@@ -77,6 +77,7 @@ if ($method === 'POST') {
         }
 
         if (file_put_contents($configPath, json_encode($config, JSON_PRETTY_PRINT))) {
+            @chmod($configPath, 0600);
             echo json_encode(['status' => 'success', 'message' => 'Configuration saved successfully!']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to write configuration file. Please check folder permissions.']);

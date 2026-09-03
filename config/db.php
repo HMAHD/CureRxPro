@@ -29,9 +29,17 @@ if ($userDataPath) {
     $configPath = __DIR__ . '/db_config.json';
 }
 
+// Check environment variable overrides first (SEC-04)
+$host = getenv('DB_HOST') ?: $host;
+$port = getenv('DB_PORT') ?: $port;
+$user = getenv('DB_USER') ?: $user;
+$pass = getenv('DB_PASS') !== false ? getenv('DB_PASS') : $pass;
+$dbname = getenv('DB_NAME') ?: $dbname;
+
 if (file_exists($configPath)) {
-    $config = json_decode(file_get_contents($configPath), true);
-    if ($config) {
+    @chmod($configPath, 0600);
+    $config = json_decode(@file_get_contents($configPath), true);
+    if ($config && !getenv('DB_HOST')) {
         $host = $config['host'] ?? $host;
         $port = $config['port'] ?? $port;
         $user = $config['user'] ?? $user;
