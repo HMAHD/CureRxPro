@@ -2289,7 +2289,73 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Load and Render all Doctor Queues on Live Dashboard
+  // Real-Time Queue Auto-Refresh Bridge (Issue #16)
+  function renderQueueMonitorData(data) {
+    const grid = document.getElementById('queue-monitor-grid');
+    if (!grid || !data) return;
+
+    if (data.length === 0) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; padding: 30px 0; text-align: center; color: var(--text-muted); font-weight:700;"><i class="fa-solid fa-circle-info"></i> No doctors added yet. Go to Settings tab to add doctors.</div>`;
+      return;
+    }
+
+    grid.innerHTML = data.map(item => {
+      const doc = item.doctor;
+      const queue = item.queue;
+      const serving = queue.find(x => x.status === 'Serving');
+      const waiting = queue.filter(x => x.status === 'Waiting');
+
+      return `
+        <div class="glass-card" style="display:flex; flex-direction:column; border-color:${serving ? 'var(--emerald-500)' : 'var(--border-subtle)'}; min-height: 280px; padding: 18px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-subtle); padding-bottom:10px; margin-bottom:12px;">
+            <div>
+              <h3 style="margin:0; font-size:15px; color:var(--text-heading); font-weight:800;">${escapeHtml(doc.name)}</h3>
+              <small style="color:var(--text-muted); font-size:11px; font-weight:700;">${escapeHtml(doc.qualifications || 'General Practitioner')}</small>
+            </div>
+            <span class="badge" style="background:${waiting.length > 0 ? 'var(--rose)' : 'var(--text-muted)'}; color:#ffffff; font-size:10px; font-weight:800; border-radius:4px; padding:2px 6px;">
+              ${waiting.length} Waiting
+            </span>
+          </div>
+
+          <!-- Currently Serving -->
+          <div style="background:${serving ? '#f0fdf4' : '#f8fafc'}; border:1px solid ${serving ? '#bbf7d0' : 'var(--border-subtle)'}; border-radius:8px; padding:10px 12px; margin-bottom:12px;">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:${serving ? 'var(--emerald-700)' : 'var(--text-muted)'}; display:flex; align-items:center; gap:5px;">
+              <i class="fa-solid ${serving ? 'fa-spinner fa-spin' : 'fa-circle-notch'}"></i> Currently Serving
+            </div>
+            <div style="font-size:14px; font-weight:800; color:var(--text-heading); margin-top:4px;">
+              ${serving ? `Token ${serving.token_number} - ${escapeHtml(serving.patient_name)}` : '<span style="color:var(--text-muted); font-weight:500;">No patient called yet</span>'}
+            </div>
+          </div>
+
+          <!-- Waiting Queue List -->
+          <div style="flex:1; min-height:100px; max-height:180px; overflow-y:auto; margin-bottom:12px;">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Waiting Patients</div>
+            ${waiting.length === 0 ? `
+              <div style="color:var(--text-muted); font-size:12px; padding:10px 0; text-align:center;">No patients waiting.</div>
+            ` : waiting.map(pt => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--border-subtle);">
+                <span style="font-size:12.5px; font-weight:700; color:var(--text-heading);">Token ${pt.token_number} - ${escapeHtml(pt.patient_name)}</span>
+                <small style="color:var(--text-muted); font-size:10.5px;">${pt.patient_age}y / ${pt.patient_gender}</small>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Action button for receptionist -->
+          <button type="button" class="btn btn-outline btn-sm btn-monitor-add-queue" data-docid="${doc.id}" style="width:100%; font-size:11.5px; border-color:var(--teal-600); color:var(--teal-600); margin-top: auto;">
+            <i class="fa-solid fa-user-plus"></i> Add Patient to ${escapeHtml(doc.name)}'s Queue
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.btn-monitor-add-queue').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const docId = btn.getAttribute('data-docid');
+        openAddToQueueModal(docId);
+      });
+    });
+  }
+
   async function loadQueueMonitorDashboard() {
     const grid = document.getElementById('queue-monitor-grid');
     if (!grid) return;
@@ -2297,72 +2363,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('api/queue.php?all_doctors=true');
       const json = await res.json();
-
-      if (json.status === 'success' && json.data) {
-        const data = json.data;
-        if (data.length === 0) {
-          grid.innerHTML = `<div style="grid-column: 1/-1; padding: 30px 0; text-align: center; color: var(--text-muted); font-weight:700;"><i class="fa-solid fa-circle-info"></i> No doctors added yet. Go to Settings tab to add doctors.</div>`;
-          return;
-        }
-
-        grid.innerHTML = data.map(item => {
-          const doc = item.doctor;
-          const queue = item.queue;
-          const serving = queue.find(x => x.status === 'Serving');
-          const waiting = queue.filter(x => x.status === 'Waiting');
-
-          return `
-            <div class="glass-card" style="display:flex; flex-direction:column; border-color:${serving ? 'var(--emerald-500)' : 'var(--border-subtle)'}; min-height: 280px; padding: 18px;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-subtle); padding-bottom:10px; margin-bottom:12px;">
-                <div>
-                  <h3 style="margin:0; font-size:15px; color:var(--text-heading); font-weight:800;">${escapeHtml(doc.name)}</h3>
-                  <small style="color:var(--text-muted); font-size:11px; font-weight:700;">${escapeHtml(doc.qualifications || 'General Practitioner')}</small>
-                </div>
-                <span class="badge" style="background:${waiting.length > 0 ? 'var(--rose)' : 'var(--text-muted)'}; color:#ffffff; font-size:10px; font-weight:800; border-radius:4px; padding:2px 6px;">
-                  ${waiting.length} Waiting
-                </span>
-              </div>
-
-              <!-- Currently Serving -->
-              <div style="background:${serving ? '#f0fdf4' : '#f8fafc'}; border:1px solid ${serving ? '#bbf7d0' : 'var(--border-subtle)'}; border-radius:8px; padding:10px 12px; margin-bottom:12px;">
-                <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:${serving ? 'var(--emerald-700)' : 'var(--text-muted)'}; display:flex; align-items:center; gap:5px;">
-                  <i class="fa-solid ${serving ? 'fa-spinner fa-spin' : 'fa-circle-notch'}"></i> Currently Serving
-                </div>
-                <div style="font-size:14px; font-weight:800; color:var(--text-heading); margin-top:4px;">
-                  ${serving ? `Token ${serving.token_number} - ${escapeHtml(serving.patient_name)}` : '<span style="color:var(--text-muted); font-weight:500;">No patient called yet</span>'}
-                </div>
-              </div>
-
-              <!-- Waiting Queue List -->
-              <div style="flex:1; min-height:100px; max-height:180px; overflow-y:auto; margin-bottom:12px;">
-                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Waiting Patients</div>
-                ${waiting.length === 0 ? `
-                  <div style="color:var(--text-muted); font-size:12px; padding:10px 0; text-align:center;">No patients waiting.</div>
-                ` : waiting.map(pt => `
-                  <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--border-subtle);">
-                    <span style="font-size:12.5px; font-weight:700; color:var(--text-heading);">Token ${pt.token_number} - ${escapeHtml(pt.patient_name)}</span>
-                    <small style="color:var(--text-muted); font-size:10.5px;">${pt.patient_age}y / ${pt.patient_gender}</small>
-                  </div>
-                `).join('')}
-              </div>
-
-              <!-- Action button for receptionist -->
-              <button type="button" class="btn btn-outline btn-sm btn-monitor-add-queue" data-docid="${doc.id}" style="width:100%; font-size:11.5px; border-color:var(--teal-600); color:var(--teal-600); margin-top: auto;">
-                <i class="fa-solid fa-plus-circle"></i> Add Patient to Queue
-              </button>
-            </div>
-          `;
-        }).join('');
-
-        // Attach event listeners to Add Patient buttons in cards
-        grid.querySelectorAll('.btn-monitor-add-queue').forEach(btn => {
-          btn.addEventListener('click', () => {
-            document.querySelector('[data-tab="tab-patients"]').click();
-            alert('Please select a patient from the directory list and click the "Queue" button.');
-          });
-        });
-      }
-    } catch (err) {
       console.error(err);
     }
   }

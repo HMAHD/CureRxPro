@@ -8,6 +8,39 @@ verify_api_request();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    $action = $_GET['action'] ?? '';
+    if ($action === 'stream') {
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no');
+
+        $docStmt = $pdo->query("SELECT * FROM `doctors` ORDER BY `name` ASC");
+        $doctors = $docStmt->fetchAll();
+
+        $data = [];
+        foreach ($doctors as $d) {
+            $stmt = $pdo->prepare("SELECT q.*, p.name as patient_name, p.patient_code, p.age as patient_age, p.gender as patient_gender, p.phone as patient_phone, p.allergies as patient_allergies, p.blood_group as patient_blood_group
+                FROM `waiting_queue` q
+                JOIN `patients` p ON q.patient_id = p.id
+                WHERE q.doctor_id = ? 
+                  AND q.status IN ('Waiting', 'Serving')
+                  AND DATE(q.created_at) = CURDATE()
+                ORDER BY q.token_number ASC");
+            $stmt->execute([$d['id']]);
+            $data[] = [
+                'doctor' => $d,
+                'queue' => $stmt->fetchAll()
+            ];
+        }
+
+        echo "retry: 3000\n";
+        echo "data: " . json_encode(['status' => 'success', 'data' => $data]) . "\n\n";
+        @ob_flush();
+        @flush();
+        exit;
+    }
+
     $all_doctors = isset($_GET['all_doctors']) && $_GET['all_doctors'] === 'true';
 
     if ($all_doctors) {
