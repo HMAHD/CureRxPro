@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initModals();
   loadPrescriptionsHistory();
   loadPatientsList();
+  initCategoryFilterChips();
   loadMedicinesList();
   loadDoctorsList();
   initDoctorManagement();
@@ -1929,13 +1930,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Load Medicines Master List
-  async function loadMedicinesList() {
+  // Load Medicines Master List with Category Filtering (Issue #15)
+  let activeMedCategory = 'all';
+
+  function initCategoryFilterChips() {
+    const chipsContainer = document.getElementById('med-category-filter-chips');
+    if (!chipsContainer) return;
+
+    chipsContainer.querySelectorAll('.template-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        chipsContainer.querySelectorAll('.template-chip').forEach(c => {
+          c.classList.remove('active');
+          c.style.background = '';
+          c.style.color = '';
+        });
+        chip.classList.add('active');
+        chip.style.background = 'var(--teal-600)';
+        chip.style.color = '#fff';
+
+        activeMedCategory = chip.getAttribute('data-cat') || 'all';
+        loadMedicinesList(activeMedCategory);
+      });
+    });
+  }
+
+  async function loadMedicinesList(category = activeMedCategory) {
     const tbody = document.getElementById('tbody-medicines');
     if (!tbody) return;
 
     try {
-      const res = await fetch('api/medicines.php');
+      const res = await fetch(`api/medicines.php?type=${encodeURIComponent(category)}`);
       const json = await res.json();
 
       if (json.status === 'success') {
@@ -1957,7 +1981,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm('Remove drug from master database?')) {
               const mid = btn.getAttribute('data-id');
               await fetch(`api/medicines.php?id=${mid}`, { method: 'DELETE' });
-              loadMedicinesList();
+              loadMedicinesList(activeMedCategory);
               loadStats();
             }
           });

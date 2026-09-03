@@ -499,6 +499,19 @@ if (file_exists($configPath)) {
             <i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_drug">+ Add New Drug</span>
           </button>
         </div>
+
+        <!-- Category Filter Pills (Issue #15) -->
+        <div class="template-chips" id="med-category-filter-chips" style="margin-bottom: 16px;">
+          <div class="template-chip active" data-cat="all" style="background:var(--teal-600); color:#fff;">All Medicines</div>
+          <div class="template-chip" data-cat="Tablet">Tablets</div>
+          <div class="template-chip" data-cat="Capsule">Capsules</div>
+          <div class="template-chip" data-cat="Syrup">Syrups</div>
+          <div class="template-chip" data-cat="Injection">Injections</div>
+          <div class="template-chip" data-cat="Cream/Ointment">Creams/Ointments</div>
+          <div class="template-chip" data-cat="Drops">Drops</div>
+          <div class="template-chip" data-cat="Inhaler">Inhalers</div>
+        </div>
+
         <div style="overflow-x:auto;">
           <table class="data-table">
             <thead>

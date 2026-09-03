@@ -9,14 +9,27 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $query = trim($_GET['q'] ?? '');
+    $type = trim($_GET['type'] ?? 'all');
+
+    $sql = "SELECT * FROM `medicines` WHERE 1=1";
+    $params = [];
 
     if ($query !== '') {
-        $stmt = $pdo->prepare("SELECT * FROM `medicines` WHERE `name` LIKE ? OR `generic_name` LIKE ? ORDER BY `name` ASC LIMIT 15");
+        $sql .= " AND (`name` LIKE ? OR `generic_name` LIKE ?)";
         $term = "%$query%";
-        $stmt->execute([$term, $term]);
-    } else {
-        $stmt = $pdo->query("SELECT * FROM `medicines` ORDER BY `name` ASC LIMIT 100");
+        $params[] = $term;
+        $params[] = $term;
     }
+
+    if ($type !== 'all' && $type !== '') {
+        $sql .= " AND `type` = ?";
+        $params[] = $type;
+    }
+
+    $sql .= " ORDER BY `name` ASC LIMIT 100";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
 
     $medicines = $stmt->fetchAll();
     echo json_encode(['status' => 'success', 'data' => $medicines]);
