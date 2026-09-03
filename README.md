@@ -37,20 +37,20 @@ CureRx Pro is an offline-first desktop application designed for medical clinics,
 
 ```mermaid
 graph TD
-    subgraph Desktop Shell (Electron)
-        Main[Main Process: main.js]
-        IPC[IPC Handler & Auto Updater]
-        PrintWorker[Hidden Silent Print Worker Window]
-        UI[Renderer Window: BrowserWindow]
+    subgraph DesktopShell["Desktop Shell (Electron)"]
+        Main["Main Process: main.js"]
+        IPC["IPC Handler & Auto Updater"]
+        PrintWorker["Hidden Silent Print Worker Window"]
+        UI["Renderer Window: BrowserWindow"]
     end
 
-    subgraph Embedded Local Runtimes
-        PHP[PHP 8 Built-in Server - Port 8989]
-        MySQL[Portable MySQL Server - Port 3307]
+    subgraph EmbeddedRuntimes["Embedded Local Runtimes"]
+        PHP["PHP 8 Built-in Server - Port 8989"]
+        MySQL["Portable MySQL Server - Port 3307"]
     end
 
-    subgraph Data Pipeline & Analytics
-        PythonScripts[Drug Ingestion & Classification Scripts]
+    subgraph DataPipeline["Data Pipeline & Analytics"]
+        PythonScripts["Drug Ingestion & Classification Scripts"]
     end
 
     UI -->|HTTP / JSON REST API| PHP
@@ -79,6 +79,10 @@ graph TD
 
 ```
 cureRXPro/
+├── .github/                    # GitHub Workflows & Templates
+│   ├── ISSUE_TEMPLATE/         # Bug report & feature request issue forms
+│   ├── PULL_REQUEST_TEMPLATE.md# Pull request review checklist
+│   └── workflows/              # GitHub Actions CI/CD workflows (build.yml, lint.yml)
 ├── api/                        # RESTful API Endpoints (PHP)
 │   ├── backup.php              # Database backup and restoration API
 │   ├── doctors.php             # Doctor profiles management
@@ -87,6 +91,7 @@ cureRXPro/
 │   ├── prescriptions.php       # Prescription builder & visit history
 │   ├── queue.php               # Queue state management
 │   ├── queue_billing.php       # Invoicing & payment collection
+│   ├── run_migrations.php      # Automated database schema migration runner
 │   └── settings.php            # Clinic information & system settings
 ├── assets/                     # UI Assets, Icons, and Print Stylesheets
 ├── bin/                        # Embedded Portable MySQL & PHP Binaries
@@ -94,12 +99,16 @@ cureRXPro/
 │   ├── db.php                  # PDO database abstraction module
 │   ├── db_config.json          # Active database credentials & configuration
 │   └── db_config.json.example  # Configuration template file
-├── classify_drugs.py           # Pharmaceutical catalog NLP classification script
 ├── db_setup.php                # Database Connection & Workstation Configuration Wizard
-├── filter_and_import_pure_drugs.py # Excel master drug list import pipeline
 ├── index.php                   # Main Interface & Layout Controller
 ├── main.js                     # Electron Main Process Entrypoint
 ├── preload.js                  # Preload Script for Secure IPC Context Bridge
+├── scripts/                    # Build & Migration Scripts
+│   ├── migrations/             # SQL Schema Migration Definitions (001, 002, 003...)
+│   └── prepare-portable.js     # Portable Runtime Audit Script
+├── tools/                      # Data Pipeline & Import Utilities
+│   └── data-pipeline/          # Python drug classification, NLP scripts & price lists
+├── LICENSE                     # ISC License File
 └── package.json                # Project Manifest & Build Dependencies
 ```
 
