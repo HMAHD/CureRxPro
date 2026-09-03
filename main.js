@@ -219,18 +219,34 @@ app.on('quit', () => {
 ipcMain.on('trigger-print-silent', (event, payload) => {
   const fs = require('fs');
   try {
+    if (!payload || typeof payload.html !== 'string') {
+      console.error('Invalid print payload received');
+      return;
+    }
+
+    // Sanitize paperSize parameter
+    const allowedSizes = ['A5', 'A4', 'Thermal'];
+    const paperSize = allowedSizes.includes(payload.paperSize) ? payload.paperSize : 'A5';
+
+    // Strip harmful script tags and event handlers to prevent XSS (SEC-03)
+    let sanitizedHtml = payload.html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/on\w+\s*=\s*(['"])(.*?)\1/gi, '');
+
     const printCssPath = path.join(__dirname, 'assets', 'css', 'print.css');
     let printCss = '';
     if (fs.existsSync(printCssPath)) {
       printCss = fs.readFileSync(printCssPath, 'utf8');
     }
 
-    // Spawn a hidden worker window
+    // Spawn a sandboxed hidden worker window
     let workerWindow = new BrowserWindow({
       show: false,
       webPreferences: {
         nodeIntegration: false,
-        contextIsolation: true
+        contextIsolation: true,
+        sandbox: true,
+        webSecurity: true
       }
     });
 
@@ -239,6 +255,7 @@ ipcMain.on('trigger-print-silent', (event, payload) => {
       <html>
       <head>
         <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:;">
         <style>
           ${printCss}
           body {
@@ -249,9 +266,9 @@ ipcMain.on('trigger-print-silent', (event, payload) => {
           }
         </style>
       </head>
-      <body class="print-size-${payload.paperSize}">
+      <body class="print-size-${paperSize}">
         <div id="print-area">
-          ${payload.html}
+          ${sanitizedHtml}
         </div>
       </body>
       </html>
