@@ -1002,12 +1002,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const json = await res.json();
 
       if (json.status === 'success' && json.data.length > 0) {
-        dropdown.innerHTML = json.data.map(m => `
-          <div class="autocomplete-item" data-id="${m.id}">
-            <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.type || 'Tablet')})
-            <small>${escapeHtml(m.generic_name || '')} | Price: LKR ${parseFloat(m.unit_price || 0).toFixed(2)}</small>
-          </div>
-        `).join('');
+        dropdown.innerHTML = json.data.map(m => {
+          const qty = parseInt(m.stock_qty !== undefined ? m.stock_qty : 500);
+          let stockBadge = '';
+          if (qty <= 0) {
+            stockBadge = `<span class="stock-badge stock-out"><i class="fa-solid fa-circle-xmark"></i> OUT OF STOCK</span>`;
+          } else if (qty <= 20) {
+            stockBadge = `<span class="stock-badge stock-low"><i class="fa-solid fa-triangle-exclamation"></i> Low Stock (${qty})</span>`;
+          } else {
+            stockBadge = `<span class="stock-badge stock-ok"><i class="fa-solid fa-check"></i> Stock: ${qty}</span>`;
+          }
+
+          return `
+            <div class="autocomplete-item" data-id="${m.id}">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <strong>${escapeHtml(m.name)}</strong>
+                ${stockBadge}
+              </div>
+              <small>Type: ${escapeHtml(m.type || 'Tablet')} ${m.generic_name ? `| ${escapeHtml(m.generic_name)}` : ''} | Price: LKR ${parseFloat(m.unit_price || 0).toFixed(2)}</small>
+            </div>
+          `;
+        }).join('');
         dropdown.style.display = 'block';
         tr.classList.add('active-dropdown');
 

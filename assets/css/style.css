@@ -708,3 +708,33 @@ textarea.form-control {
   background-color: #132a2a;
   color: #2dd4bf;
 }
+
+/* Stock Status Badges (Issue #12) */
+.stock-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stock-ok {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.stock-low {
+  background-color: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  animation: alertPulse 2s infinite alternate;
+}
+
+.stock-out {
+  background-color: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
