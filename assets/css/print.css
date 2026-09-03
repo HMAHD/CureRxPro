@@ -110,6 +110,22 @@
   body.print-size-Thermal @page {
     margin: 0mm !important;
   }
+
+  /* Multipage Pagination & Page-Break Control (Issue #17) */
+  tr, .print-med-table tr, .print-patient-bar, .print-vitals-row, .print-clinical-notes, .print-footer, .signature-box, .print-bill-summary-box {
+    page-break-inside: avoid !important;
+    break-inside: avoid-page !important;
+  }
+
+  h1, h2, h3, h4, th {
+    page-break-after: avoid !important;
+    break-after: avoid-page !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
 }
 
 /* -------------------------------------------------------------
