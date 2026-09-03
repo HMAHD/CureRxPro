@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTemplates();
   initPatientSearch();
   initRxTable();
+  initKeyboardShortcuts();
   initModals();
   loadPrescriptionsHistory();
   loadPatientsList();
@@ -98,6 +99,87 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="${i18n.t('ins_as_directed')}">${i18n.t('ins_as_directed')}</option>
       `;
       if (curVal) sel.value = curVal;
+    });
+  }
+
+  // Speed Prescribing & Keyboard Shortcuts System (Issue #5)
+  function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      // Ctrl + N or Cmd + N: New Patient / Reset Rx Form
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        const tabBuilder = document.querySelector('[data-tab="tab-builder"]');
+        if (tabBuilder) tabBuilder.click();
+        const btnChange = document.getElementById('btn-change-patient');
+        if (btnChange) btnChange.click();
+        const ptSearch = document.getElementById('patient-search-input');
+        if (ptSearch) { ptSearch.value = ''; ptSearch.focus(); }
+        return;
+      }
+
+      // Ctrl + F or Cmd + F: Focus Patient Search
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        const tabBuilder = document.querySelector('[data-tab="tab-builder"]');
+        if (tabBuilder) tabBuilder.click();
+        const ptSearch = document.getElementById('patient-search-input');
+        if (ptSearch) ptSearch.focus();
+        return;
+      }
+
+      // Ctrl + D or Cmd + D: Jump to Drug Builder
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        const tabBuilder = document.querySelector('[data-tab="tab-builder"]');
+        if (tabBuilder) tabBuilder.click();
+        const firstMedInp = document.querySelector('.rx-med-name');
+        if (firstMedInp) firstMedInp.focus();
+        return;
+      }
+
+      // Ctrl + Enter or Cmd + Enter: Instant Save & Print
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        const btnSavePrint = document.getElementById('btn-save-print-rx');
+        if (btnSavePrint && !btnSavePrint.disabled) {
+          btnSavePrint.click();
+        }
+        return;
+      }
+
+      // Escape: Close active dropdowns & modals
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        return;
+      }
+
+      // Fast-Tab Enter Key Sequence inside Prescription Table Inputs
+      if (e.key === 'Enter' && e.target.classList.contains('form-control')) {
+        const tr = e.target.closest('tr');
+        if (tr && tr.parentNode && tr.parentNode.id === 'rx-items-tbody') {
+          e.preventDefault();
+          if (e.target.classList.contains('rx-med-name')) {
+            tr.querySelector('.rx-strength')?.focus();
+          } else if (e.target.classList.contains('rx-strength')) {
+            tr.querySelector('.rx-dosage')?.focus();
+          } else if (e.target.classList.contains('rx-dosage')) {
+            tr.querySelector('.rx-instruction')?.focus();
+          } else if (e.target.classList.contains('rx-instruction')) {
+            tr.querySelector('.rx-duration')?.focus();
+          } else if (e.target.classList.contains('rx-duration')) {
+            tr.querySelector('.rx-qty')?.focus();
+          } else if (e.target.classList.contains('rx-qty')) {
+            // Add next row and focus new medicine input
+            addRxRow();
+            const lastTr = document.querySelector('#rx-items-tbody tr:last-child');
+            if (lastTr) {
+              const newMedInp = lastTr.querySelector('.rx-med-name');
+              if (newMedInp) newMedInp.focus();
+            }
+          }
+        }
+      }
     });
   }
 
