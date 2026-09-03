@@ -194,25 +194,43 @@ app.whenReady().then(async () => {
   }
 });
 
-app.on('window-all-closed', () => {
+function gracefulCleanup(callback) {
   if (phpProcess) {
-    phpProcess.kill();
+    try { phpProcess.kill(); } catch (e) {}
+    phpProcess = null;
   }
-  if (mysqlProcess) {
-    mysqlProcess.kill();
+
+  const mysqlAdminPath = path.join(__dirname, 'bin', 'mysql', 'bin', 'mysqladmin.exe');
+  const fs = require('fs');
+  if (mysqlProcess && fs.existsSync(mysqlAdminPath)) {
+    console.log('Initiating graceful MySQL shutdown via mysqladmin...');
+    const { exec } = require('child_process');
+    exec(`"${mysqlAdminPath}" -u root --port=3307 shutdown`, () => {
+      if (mysqlProcess) {
+        try { mysqlProcess.kill(); } catch (e) {}
+        mysqlProcess = null;
+      }
+      if (callback) callback();
+    });
+  } else {
+    if (mysqlProcess) {
+      try { mysqlProcess.kill(); } catch (e) {}
+      mysqlProcess = null;
+    }
+    if (callback) callback();
   }
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+}
+
+app.on('window-all-closed', () => {
+  gracefulCleanup(() => {
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
 });
 
-app.on('quit', () => {
-  if (phpProcess) {
-    phpProcess.kill();
-  }
-  if (mysqlProcess) {
-    mysqlProcess.kill();
-  }
+app.on('will-quit', (e) => {
+  gracefulCleanup();
 });
 
 // IPC Handler for Silent Print trigger (Prints via a hidden background worker window to prevent main window focus locks)
