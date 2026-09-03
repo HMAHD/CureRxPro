@@ -70,7 +70,12 @@ try {
     ];
     $pdo = new PDO($dsn, $user, $pass, $options);
 
-    init_tables($pdo);
+    // Decouple schema DDL initialization from every request lifecycle for high performance (Issue #9)
+    $schemaFlag = ($userDataPath ?: __DIR__) . '/.schema_initialized';
+    if (!file_exists($schemaFlag)) {
+        init_tables($pdo);
+        @file_put_contents($schemaFlag, date('Y-m-d H:i:s'));
+    }
     $db_connected = true;
 
 } catch (\PDOException $e) {
