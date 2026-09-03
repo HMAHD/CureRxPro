@@ -493,53 +493,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const info = await res.json();
 
         if (info && info.latest_version && info.latest_version !== currentVersion) {
-          // New version is available!
-          if (confirm(`A new update (v${info.latest_version}) is available!\n\nRelease Notes: ${info.release_notes || 'Improvements and bug fixes.'}\n\nWould you like to download and install this update automatically now?`)) {
-            const downloadUrl = info.download_url || 'https://smarthub.web.lk/curerx.php';
-            
-            // Check if running inside Electron and supports auto-updater
-            if (window.electronAPI && typeof window.electronAPI.startAutoUpdate === 'function') {
-              btnCheckUpdates.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Downloading...';
-              if (msgEl) {
-                msgEl.textContent = 'Downloading update... 0%';
-                msgEl.style.color = 'var(--teal-600)';
-                msgEl.style.display = 'block';
-              }
+          // Open Modal Auto-Update Status Dialog (Issue #14)
+          const modalUpdate = document.getElementById('modal-auto-update');
+          const verPill = document.getElementById('update-modal-ver');
+          const notesText = document.getElementById('update-modal-notes');
+          const btnStartDL = document.getElementById('btn-start-download-update');
+          const progContainer = document.getElementById('update-progress-container');
+          const statusText = document.getElementById('update-progress-status-text');
+          const percentText = document.getElementById('update-progress-percent');
+          const barFill = document.getElementById('update-progress-bar-fill');
 
-              // Listen to progress updates
-              window.electronAPI.onUpdateProgress((percent) => {
-                if (percent === 100) {
-                  btnCheckUpdates.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Installing...';
-                  if (msgEl) {
-                    msgEl.textContent = 'Installing update... The app will close and restart shortly.';
-                    msgEl.style.color = 'var(--emerald-700)';
+          if (verPill) verPill.textContent = `v${info.latest_version}`;
+          if (notesText) notesText.textContent = info.release_notes || 'Includes critical security enhancements and performance fixes.';
+          if (modalUpdate) modalUpdate.classList.add('active');
+
+          btnCheckUpdates.disabled = false;
+          btnCheckUpdates.innerHTML = '<i class="fa-solid fa-rotate"></i> ' + i18n.t('btn_check_updates');
+
+          if (btnStartDL) {
+            btnStartDL.onclick = () => {
+              const downloadUrl = info.download_url || 'https://smarthub.web.lk/curerx.php';
+              btnStartDL.disabled = true;
+              btnStartDL.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Downloading...';
+              if (progContainer) progContainer.style.display = 'block';
+
+              if (window.electronAPI && typeof window.electronAPI.startAutoUpdate === 'function') {
+                window.electronAPI.onUpdateProgress((percent) => {
+                  if (percentText) percentText.textContent = `${percent}%`;
+                  if (barFill) barFill.style.width = `${percent}%`;
+                  if (percent === 100) {
+                    if (statusText) statusText.textContent = 'Installing update... Restarting app...';
+                    btnStartDL.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restarting...';
                   }
-                } else {
-                  if (msgEl) msgEl.textContent = `Downloading update... ${percent}%`;
-                }
-              });
+                });
 
-              // Listen to download errors
-              window.electronAPI.onUpdateError((errMsg) => {
-                btnCheckUpdates.disabled = false;
-                btnCheckUpdates.innerHTML = '<i class="fa-solid fa-rotate"></i> ' + i18n.t('btn_check_updates');
-                if (msgEl) {
-                  msgEl.textContent = `✗ Download failed: ${errMsg}`;
-                  msgEl.style.color = 'var(--rose-700)';
-                }
-              });
+                window.electronAPI.onUpdateError((errMsg) => {
+                  btnStartDL.disabled = false;
+                  btnStartDL.innerHTML = '<i class="fa-solid fa-download"></i> Retry Download';
+                  if (statusText) statusText.textContent = `Download failed: ${errMsg}`;
+                });
 
-              // Trigger download in main process
-              window.electronAPI.startAutoUpdate(downloadUrl);
-            } else {
-              // Fallback for standard web browser mode
-              btnCheckUpdates.disabled = false;
-              btnCheckUpdates.innerHTML = '<i class="fa-solid fa-rotate"></i> ' + i18n.t('btn_check_updates');
-              window.open(downloadUrl, '_blank');
-            }
-          } else {
-            btnCheckUpdates.disabled = false;
-            btnCheckUpdates.innerHTML = '<i class="fa-solid fa-rotate"></i> ' + i18n.t('btn_check_updates');
+                window.electronAPI.startAutoUpdate(downloadUrl);
+              } else {
+                window.open(downloadUrl, '_blank');
+              }
+            };
           }
         } else {
           // Already on latest version

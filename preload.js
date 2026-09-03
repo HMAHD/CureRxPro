@@ -26,5 +26,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     if (typeof callback === 'function') {
       ipcRenderer.on('auto-update-error', (event, errMsg) => callback(errMsg));
     }
+  },
+  onUpdateDownloaded: (callback) => {
+    if (typeof callback === 'function') {
+      ipcRenderer.on('auto-update-downloaded', (event) => callback());
+    }
   }
 });
