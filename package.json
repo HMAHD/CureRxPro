@@ -19,12 +19,12 @@
   "author": "CureRx HealthTech",
   "license": "ISC",
   "dependencies": {
-    "electron-updater": "^6.2.1"
+    "electron-updater": "6.2.1"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3",
-    "eslint": "^8.57.0"
+    "electron": "30.0.0",
+    "electron-builder": "24.13.3",
+    "eslint": "8.57.0"
   },
   "build": {
     "asar": false,
