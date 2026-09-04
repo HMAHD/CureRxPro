@@ -19,3 +19,6 @@ CLAUDE.md
 api_secret.key
 config/db_config.json
 .schema_initialized
+
+# Application logs
+storage/logs/*.log
