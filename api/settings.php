@@ -5,6 +5,36 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/auth_check.php';
 verify_api_request();
 
+// HMAC-SHA256 signed offline license key validator.
+// Expected format: CRX-{payload}-{hmac}
+// payload = base64url(plan|expiry_unix)
+function validate_license_key(string $key, string $secret): array|false {
+    $parts = explode('-', $key, 3); // ['CRX', payload, hmac]
+    if (count($parts) !== 3) {
+        return false;
+    }
+    [, $payload, $providedHmac] = $parts;
+    $signingKey = hash('sha256', $secret, true);
+    $expectedHmac = hash_hmac('sha256', $payload, $signingKey);
+    if (!hash_equals($expectedHmac, $providedHmac)) {
+        return false;
+    }
+    // Decode payload: plan|expiry_unix
+    $decoded = base64_decode(strtr($payload, '-_', '+/'));
+    if ($decoded === false) {
+        return false;
+    }
+    $splitParts = explode('|', $decoded, 2) + ['', '0'];
+    [$plan, $expiry] = $splitParts;
+    if ((int)$expiry !== 0 && (int)$expiry < time()) {
+        return false; // expired
+    }
+    if (!in_array($plan, ['starter', 'pro', 'clinic'], true)) {
+        return false;
+    }
+    return ['plan' => $plan, 'expiry' => (int)$expiry];
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
@@ -45,27 +75,24 @@ if ($method === 'POST') {
 
     if ($action === 'activate_license') {
         $license_key = trim($data['license_key'] ?? '');
-        $upperKey = strtoupper($license_key);
-        
-        if (str_contains($upperKey, 'CURERX') || str_contains($upperKey, 'CRX')) {
-            $currStmt = $pdo->query("SELECT * FROM `settings` LIMIT 1");
-            $curr = $currStmt->fetch();
 
-            $today = date('Y-m-d');
-            $baseDate = $today;
+        if (str_starts_with($license_key, 'CRX-')) {
+            // Load the installation secret
+            $secretFile = getenv('USER_DATA_PATH')
+                ? getenv('USER_DATA_PATH') . '/api_secret.key'
+                : __DIR__ . '/../api_secret.key';
+            $installSecret = file_exists($secretFile) ? trim(file_get_contents($secretFile)) : '';
 
-            if ($curr && !empty($curr['subscription_expires_at']) && $curr['subscription_expires_at'] >= $today) {
-                $baseDate = $curr['subscription_expires_at'];
+            $keyData = validate_license_key($license_key, $installSecret);
+            if ($keyData === false) {
+                http_response_code(422);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid or expired license key']);
+                exit;
             }
 
-            $days = 30;
-            if (str_contains($upperKey, 'YEAR') || str_contains($upperKey, '365')) {
-                $days = 365;
-            } else if (str_contains($upperKey, '6MONTH') || str_contains($upperKey, '180')) {
-                $days = 180;
-            }
-
-            $newExpiry = date('Y-m-d', strtotime("$baseDate +$days days"));
+            $newExpiry = $keyData['expiry'] !== 0
+                ? date('Y-m-d', $keyData['expiry'])
+                : date('Y-m-d', strtotime('+30 days'));
 
             $stmt = $pdo->prepare("UPDATE `settings` SET `subscription_status` = 'active', `subscription_expires_at` = ?, `license_key` = ? WHERE `id` = 1");
             $stmt->execute([$newExpiry, $license_key]);
@@ -73,7 +100,6 @@ if ($method === 'POST') {
             $updatedStmt = $pdo->query("SELECT * FROM `settings` LIMIT 1");
             $updated = $updatedStmt->fetch();
 
-            // Calculate days remaining for response
             $tObj = new DateTime(date('Y-m-d'));
             $eObj = new DateTime($newExpiry);
             $diffObj = $tObj->diff($eObj);
@@ -81,8 +107,8 @@ if ($method === 'POST') {
             $updated['subscription_status'] = 'active';
 
             echo json_encode([
-                'status' => 'success', 
-                'message' => "License activated successfully! Extended by $days days. Active until: $newExpiry", 
+                'status' => 'success',
+                'message' => "License activated successfully! Active until: $newExpiry",
                 'data' => $updated
             ]);
         } else {
