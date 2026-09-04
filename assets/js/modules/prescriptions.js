@@ -30,6 +30,11 @@ export function init() {
     document.addEventListener('crx:recalculateTotal', () => {
         recalculateGrandTotal();
     });
+
+    // Listen for print preview requests from history.js
+    document.addEventListener('crx:openPrintPreview', (e) => {
+        openPrintPreviewModal(e.detail);
+    });
 }
 
 // ─── Draft Auto-Save ───────────────────────────────────────────────────────────
