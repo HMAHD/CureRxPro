@@ -713,8 +713,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (json.status === 'success' && json.data.length > 0) {
         dropdown.innerHTML = json.data.map(p => `
           <div class="autocomplete-item" data-id="${p.id}">
-            <strong>${escapeHtml(p.name)}</strong> (${p.age}y / ${p.gender})
-            <small>Code: ${p.patient_code} | Phone: ${p.phone || 'N/A'}</small>
+            <strong>${escapeHtml(p.name)}</strong> (${escapeHtml(p.age)}y / ${escapeHtml(p.gender)})
+            <small>Code: ${escapeHtml(p.patient_code)} | Phone: ${escapeHtml(p.phone || 'N/A')}</small>
           </div>
         `).join('');
         dropdown.style.display = 'block';
@@ -748,8 +748,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('selected-patient-badge');
     badge.innerHTML = `
       <div style="flex:1;">
-        <h4>${escapeHtml(p.name)} <small>(${p.patient_code})</small></h4>
-        <p>Age: ${p.age} Yrs | Gender: ${p.gender} | Phone: ${p.phone || 'N/A'} ${p.allergies ? `| <strong style="color:var(--rose)">Allergies: ${escapeHtml(p.allergies)}</strong>` : ''}</p>
+        <h4>${escapeHtml(p.name)} <small>(${escapeHtml(p.patient_code)})</small></h4>
+        <p>Age: ${escapeHtml(p.age)} Yrs | Gender: ${escapeHtml(p.gender)} | Phone: ${escapeHtml(p.phone || 'N/A')} ${p.allergies ? `| <strong style="color:var(--rose)">Allergies: ${escapeHtml(p.allergies)}</strong>` : ''}</p>
       </div>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <span id="repeat-rx-container"></span>
@@ -1221,7 +1221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="print-patient-bar">
           <div><label>Rx No:</label><span>${escapeHtml(rx.rx_number)}</span></div>
           <div><label>Date & Time:</label><span>${formattedDate}</span></div>
-          <div><label>Patient Name:</label><span>${escapeHtml(rx.patient_name)} (${rx.patient_age}y / ${rx.patient_gender})</span></div>
+          <div><label>Patient Name:</label><span>${escapeHtml(rx.patient_name)} (${escapeHtml(rx.patient_age)}y / ${escapeHtml(rx.patient_gender)})</span></div>
           <div><label>Patient ID:</label><span>${escapeHtml(rx.patient_code)}</span></div>
         </div>
 
@@ -1912,7 +1912,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <tr>
             <td><strong>${escapeHtml(p.patient_code)}</strong></td>
             <td>${escapeHtml(p.name)}</td>
-            <td>${p.age} Yrs / ${p.gender}</td>
+            <td>${escapeHtml(p.age)} Yrs / ${escapeHtml(p.gender)}</td>
             <td>${escapeHtml(p.phone || 'N/A')}</td>
             <td>${escapeHtml(p.blood_group || 'N/A')}</td>
             <td><span style="color:var(--rose)">${escapeHtml(p.allergies || 'None')}</span></td>
@@ -2264,10 +2264,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-subtle); gap:10px;">
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:6px;">
-                <span class="badge" style="background:${item.status === 'Serving' ? 'var(--emerald-600)' : 'var(--teal-600)'}; color:#ffffff; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;">Token ${item.token_number}</span>
+                <span class="badge" style="background:${item.status === 'Serving' ? 'var(--emerald-600)' : 'var(--teal-600)'}; color:#ffffff; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;">Token ${escapeHtml(item.token_number)}</span>
                 <strong style="font-size:13px; color:var(--text-heading); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${escapeHtml(item.patient_name)}</strong>
               </div>
-              <small style="color:var(--text-muted); font-size:11px;">ID: ${item.patient_code} | ${item.patient_age}y / ${item.patient_gender}</small>
+              <small style="color:var(--text-muted); font-size:11px;">ID: ${escapeHtml(item.patient_code)} | ${escapeHtml(item.patient_age)}y / ${escapeHtml(item.patient_gender)}</small>
             </div>
             <div style="display:flex; gap:4px;">
               <button type="button" class="btn btn-primary btn-sm btn-serve-queue" data-id="${item.id}" data-pid="${item.patient_id}" style="font-size:11px; padding:3px 6px; height:auto; background:${item.status === 'Serving' ? 'var(--emerald-600)' : ''};">
@@ -2371,7 +2371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ` : waiting.map(pt => `
               <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed var(--border-subtle);">
                 <span style="font-size:12.5px; font-weight:700; color:var(--text-heading);">Token ${pt.token_number} - ${escapeHtml(pt.patient_name)}</span>
-                <small style="color:var(--text-muted); font-size:10.5px;">${pt.patient_age}y / ${pt.patient_gender}</small>
+                <small style="color:var(--text-muted); font-size:10.5px;">${escapeHtml(pt.patient_age)}y / ${escapeHtml(pt.patient_gender)}</small>
               </div>
             `).join('')}
           </div>
@@ -2427,8 +2427,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (json.status === 'success' && json.data.length > 0) {
         dropdown.innerHTML = json.data.map(p => `
           <div class="autocomplete-item" data-id="${p.id}">
-            <strong>${escapeHtml(p.name)}</strong> (${p.age}y / ${p.gender})
-            <small>Code: ${p.patient_code} | Phone: ${p.phone || 'N/A'}</small>
+            <strong>${escapeHtml(p.name)}</strong> (${escapeHtml(p.age)}y / ${escapeHtml(p.gender)})
+            <small>Code: ${escapeHtml(p.patient_code)} | Phone: ${escapeHtml(p.phone || 'N/A')}</small>
           </div>
         `).join('');
         dropdown.style.display = 'block';
@@ -2605,7 +2605,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <td><strong>${escapeHtml(b.bill_number)}</strong></td>
               <td>${escapeHtml(b.patient_name)}</td>
               <td>${escapeHtml(b.doctor_name)}</td>
-              <td><span class="badge" style="background:var(--teal-600); color:#ffffff; font-weight:800; border-radius:4px; padding:2px 6px;">Token ${b.token_number}</span></td>
+              <td><span class="badge" style="background:var(--teal-600); color:#ffffff; font-weight:800; border-radius:4px; padding:2px 6px;">Token ${escapeHtml(b.token_number)}</span></td>
               <td>
                 <div style="display:flex; flex-direction:column; gap:2px;">
                   <strong>LKR ${parseFloat(b.total_amount).toFixed(2)}</strong>
@@ -2692,7 +2692,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="text-align: center; margin: 12px 0;">
           <div style="font-size: 11pt; font-weight: 700; text-transform: uppercase;">CHANNELING RECEIPT</div>
           <div style="font-size: 26pt; font-weight: 900; margin: 10px 0; border: 2px solid #000; display: inline-block; padding: 4px 18px; border-radius: 6px;">
-            TOKEN ${bill.token_number}
+            TOKEN ${escapeHtml(bill.token_number)}
           </div>
         </div>
 
@@ -2713,7 +2713,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </tr>
           <tr>
             <td style="padding: 2px 0; font-weight: 700;">Patient:</td>
-            <td style="padding: 2px 0; text-align: right;">${escapeHtml(bill.patient_name)} (${bill.patient_age}y / ${bill.patient_gender})</td>
+            <td style="padding: 2px 0; text-align: right;">${escapeHtml(bill.patient_name)} (${escapeHtml(bill.patient_age)}y / ${escapeHtml(bill.patient_gender)})</td>
           </tr>
           <tr>
             <td style="padding: 2px 0; font-weight: 700;">Patient ID:</td>
