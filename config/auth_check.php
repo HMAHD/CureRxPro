@@ -54,10 +54,6 @@ function verify_api_request() {
         $providedToken = trim($_SERVER['HTTP_X_CURERX_TOKEN']);
     }
 
-    if (empty($providedToken)) {
-        $providedToken = trim($_REQUEST['api_token'] ?? '');
-    }
-
     $expectedSecret = get_api_secret();
 
     // Verify token using timing-safe comparison
