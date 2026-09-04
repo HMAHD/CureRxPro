@@ -25,7 +25,7 @@ class Validator
         if (!isset($this->data[$field]) || $this->data[$field] === '') {
             return $this;
         }
-        if (!filter_var($this->data[$field], FILTER_VALIDATE_INT)) {
+        if (filter_var($this->data[$field], FILTER_VALIDATE_INT) === false) {
             $this->errors[$field][] = "{$field} must be an integer";
             return $this;
         }

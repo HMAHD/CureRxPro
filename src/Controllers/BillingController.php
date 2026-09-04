@@ -52,7 +52,9 @@ class BillingController
         if ($v->fails()) {
             Response::error('Validation failed', 422, $v->errors());
         }
-        $this->billing->updatePayment($id, $data['payment_status']);
+        if (!$this->billing->updatePayment($id, $data['payment_status'])) {
+            Response::error('Bill not found', 404);
+        }
         Response::json(['status' => 'success']);
     }
 }

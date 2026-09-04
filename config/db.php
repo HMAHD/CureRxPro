@@ -108,8 +108,8 @@ function init_tables($pdo) {
     if (file_exists($seedFile)) {
         $seed = json_decode(file_get_contents($seedFile), true) ?? [];
         $pdo->prepare("INSERT IGNORE INTO settings
-            (id, clinic_name, doctor_name, address, phone, slmc_reg)
-            VALUES (1, :clinic_name, :doctor_name, :address, :phone, :slmc_reg)")
+            (id, clinic_name, doctor_name, clinic_address, clinic_phone, slmc_reg)
+            VALUES (1, :clinic_name, :doctor_name, :clinic_address, :clinic_phone, :slmc_reg)")
             ->execute($seed);
     }
 

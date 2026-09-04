@@ -6,8 +6,9 @@ class QueueService
 {
     public function __construct(private \PDO $db) {}
 
-    public function assignToken(int $doctorId): int
+    public function addToQueue(int $doctorId, int $patientId, string $patientName): array
     {
+        // SELECT FOR UPDATE and INSERT must be in the same transaction to prevent token races
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare(
@@ -18,26 +19,14 @@ class QueueService
             );
             $stmt->execute([$doctorId]);
             $token = (int)$stmt->fetchColumn();
-            $this->db->commit();
-            return $token;
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
 
-    public function addToQueue(int $doctorId, int $patientId, string $patientName): array
-    {
-        $token = $this->assignToken($doctorId);
-        $this->db->beginTransaction();
-        try {
             $stmt = $this->db->prepare(
                 "INSERT INTO waiting_queue
                     (doctor_id, patient_id, patient_name, token_number, status)
                  VALUES (?, ?, ?, ?, 'Waiting')"
             );
             $stmt->execute([$doctorId, $patientId, $patientName, $token]);
-            $id  = (int)$this->db->lastInsertId();
+            $id = (int)$this->db->lastInsertId();
             $this->db->commit();
             return ['id' => $id, 'token_number' => $token];
         } catch (\Throwable $e) {

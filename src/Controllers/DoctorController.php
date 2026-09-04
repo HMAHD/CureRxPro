@@ -36,12 +36,17 @@ class DoctorController
     private function update(Request $req): never
     {
         $id   = (int)$req->get('id', 0);
+        if ($id <= 0) {
+            Response::error('Missing doctor id', 400);
+        }
         $data = $req->body();
         $v    = (new Validator($data))->required('name');
         if ($v->fails()) {
             Response::error('Validation failed', 422, $v->errors());
         }
-        $this->doctors->update($id, $data);
+        if (!$this->doctors->update($id, $data)) {
+            Response::error('Doctor not found', 404);
+        }
         Response::json(['status' => 'success']);
     }
 
