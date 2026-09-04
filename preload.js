@@ -12,9 +12,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       shell.openExternal(url);
     }
   },
-  startAutoUpdate: (url) => {
-    if (typeof url === 'string' && url.startsWith('https://')) {
-      ipcRenderer.send('start-auto-update', url);
+  startAutoUpdate: (versionTag) => {
+    if (typeof versionTag === 'string' && /^v\d+\.\d+\.\d+$/.test(versionTag)) {
+      ipcRenderer.send('start-auto-update', versionTag);
     }
   },
   onUpdateProgress: (callback) => {
