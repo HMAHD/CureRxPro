@@ -243,22 +243,6 @@ function init_tables($pdo) {
         FOREIGN KEY (`prescription_id`) REFERENCES `prescriptions`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    // Alter table fallback checks to ensure columns exist for existing tables
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `practice_mode` VARCHAR(50) NOT NULL DEFAULT 'dispensary';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `subscription_status` VARCHAR(50) NOT NULL DEFAULT 'active';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `subscription_plan` VARCHAR(100) NOT NULL DEFAULT 'Monthly Pro (LKR 3,000/mo)';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `subscription_expires_at` DATE DEFAULT '2026-12-31';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `license_key` VARCHAR(100) NOT NULL DEFAULT 'CRX-8829-PRO-MONTHLY';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `medicines` ADD COLUMN `unit_price` DECIMAL(10,2) DEFAULT 10.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `medicines` ADD COLUMN `stock_qty` INT DEFAULT 500;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescription_items` ADD COLUMN `unit_price` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescription_items` ADD COLUMN `item_total` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescription_items` ADD COLUMN `item_source` VARCHAR(50) NOT NULL DEFAULT 'clinic';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `consultation_fee` DECIMAL(10,2) DEFAULT 1000.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `medicines_total` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `discount` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `grand_total` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-
     // Multi-doctor setup
     $pdo->exec("CREATE TABLE IF NOT EXISTS `doctors` (
         `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -272,10 +256,6 @@ function init_tables($pdo) {
     if ($docCount == 0) {
         $pdo->exec("INSERT INTO `doctors` (`id`, `name`, `qualifications`, `slmc_reg`) VALUES (1, 'Dr. Sampath Perera', 'MBBS (Colombo), MD (Family Medicine)', 'SLMC 34821')");
     }
-
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `active_doctor_id` INT DEFAULT 1;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `doctor_id` INT DEFAULT 1;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `hospital_fee` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
 
     // Waiting queue table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `waiting_queue` (
@@ -304,8 +284,6 @@ function init_tables($pdo) {
         FOREIGN KEY (`patient_id`) REFERENCES `patients`(`id`) ON DELETE CASCADE,
         FOREIGN KEY (`doctor_id`) REFERENCES `doctors`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-    try { $pdo->exec("ALTER TABLE `channeling_bills` ADD COLUMN `payment_status` ENUM('Paid', 'Unpaid') DEFAULT 'Paid';"); } catch (\Exception $e) {}
 
     // Add database indexes for high-speed autocomplete search performance
     try { $pdo->exec("CREATE INDEX `idx_patients_name` ON `patients` (`name`);"); } catch (\Exception $e) {}
