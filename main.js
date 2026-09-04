@@ -11,6 +11,9 @@ try {
   console.log('autoUpdater module optional load note:', err.message);
 }
 
+const isWin = process.platform === 'win32';
+const EXE = isWin ? '.exe' : '';
+
 let mainWindow;
 let phpProcess;
 let mysqlProcess;
@@ -41,7 +44,7 @@ function copyFolderRecursiveSync(source, target) {
 function startMysqlServer() {
   return new Promise((resolve) => {
     const fs = require('fs');
-    const mysqlBin = path.join(__dirname, 'bin', 'mysql', 'bin', 'mysqld.exe');
+    const mysqlBin = path.join(__dirname, 'bin', 'mysql', 'bin', `mysqld${EXE}`);
     const baseDir = path.join(__dirname, 'bin', 'mysql');
     
     // Standard User-writable database directory inside AppData
@@ -103,10 +106,14 @@ function startPhpServer() {
   return new Promise((resolve, reject) => {
     const fs = require('fs');
     let phpBin = 'php';
-    const localPhp = path.join(__dirname, 'bin', 'php', 'php.exe');
+    const localPhp = path.join(__dirname, 'bin', 'php', `php${EXE}`);
 
     if (fs.existsSync(localPhp)) {
       phpBin = localPhp;
+    } else if (!isWin) {
+      // macOS/Linux: check Homebrew and system paths
+      const macPaths = ['/opt/homebrew/bin/php', '/usr/local/bin/php', '/usr/bin/php'];
+      phpBin = macPaths.find(p => fs.existsSync(p)) || 'php';
     } else if (fs.existsSync('C:\\xampp\\php\\php.exe')) {
       phpBin = 'C:\\xampp\\php\\php.exe';
     }
@@ -200,7 +207,7 @@ function gracefulCleanup(callback) {
     phpProcess = null;
   }
 
-  const mysqlAdminPath = path.join(__dirname, 'bin', 'mysql', 'bin', 'mysqladmin.exe');
+  const mysqlAdminPath = path.join(__dirname, 'bin', 'mysql', 'bin', `mysqladmin${EXE}`);
   const fs = require('fs');
   if (mysqlProcess && fs.existsSync(mysqlAdminPath)) {
     console.log('Initiating graceful MySQL shutdown via mysqladmin...');
