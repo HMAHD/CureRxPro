@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   if (statusText) statusText.textContent = `Download failed: ${errMsg}`;
                 });
 
-                window.electronAPI.startAutoUpdate(downloadUrl);
+                window.electronAPI.startAutoUpdate('v' + info.latest_version);
               } else {
                 window.open(downloadUrl, '_blank');
               }
