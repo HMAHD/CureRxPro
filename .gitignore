@@ -9,3 +9,8 @@ dist_app/
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Secrets — never commit
+api_secret.key
+config/db_config.json
+.schema_initialized
