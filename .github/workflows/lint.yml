@@ -14,6 +14,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -31,3 +37,9 @@ jobs:
             -not -path "./node_modules/*" \
             -not -path "./bin/*" \
             -exec php -l {} \;
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run PHPStan Static Analysis
+        run: vendor/bin/phpstan analyse --no-progress

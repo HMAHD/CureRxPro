@@ -1,0 +1,16 @@
+{
+    "name": "curerx/pro",
+    "description": "CureRx Pro PHP backend",
+    "require": {},
+    "require-dev": {
+        "phpstan/phpstan": "^1.11"
+    },
+    "autoload": {
+        "psr-4": {
+            "CureRx\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 package-lock.json
+vendor/
 
 # Build outputs
 dist/
@@ -10,6 +11,9 @@ dist_app/
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Claude Code local config — not for version control
+CLAUDE.md
 
 # Secrets — never commit
 api_secret.key
