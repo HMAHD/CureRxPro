@@ -51,6 +51,16 @@ function restoreDraft() {
         const draft = JSON.parse(raw);
         if (draft.rxItems?.length) {
             draft.rxItems.forEach(item => addRxRow(item));
+        }
+        if (draft.diagnosis) {
+            const el = document.getElementById('rx-diagnosis');
+            if (el) el.value = draft.diagnosis;
+        }
+        if (draft.followUp) {
+            const el = document.getElementById('rx-followup');
+            if (el) el.value = draft.followUp;
+        }
+        if (draft.rxItems?.length || draft.diagnosis || draft.followUp) {
             showToast('Unsaved prescription draft restored.', 'info');
         }
     } catch { /* ignore corrupt draft */ }
