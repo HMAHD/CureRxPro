@@ -42,6 +42,6 @@ foreach ($modals as $modal) {
 
 <script>window.__crxToken = '<?php echo htmlspecialchars($crx_token, ENT_QUOTES); ?>';</script>
 <script src="assets/js/i18n.js"></script>
-<script src="assets/js/app.js"></script>
+<script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
