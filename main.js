@@ -40,6 +40,23 @@ function copyFolderRecursiveSync(source, target) {
   }
 }
 
+// TCP port poll — resolves true when port accepts connections, false on timeout
+function waitForPort(port, host = '127.0.0.1', maxMs = 20000) {
+  return new Promise((resolve) => {
+    const net   = require('net');
+    const start = Date.now();
+    const attempt = () => {
+      const sock = net.createConnection({ port, host });
+      sock.on('connect', () => { sock.destroy(); resolve(true); });
+      sock.on('error',   () => {
+        if (Date.now() - start > maxMs) { resolve(false); }
+        else { setTimeout(attempt, 300); }
+      });
+    };
+    attempt();
+  });
+}
+
 // 1. Start Portable Embedded MySQL Database Server
 function startMysqlServer() {
   return new Promise((resolve) => {
@@ -92,8 +109,8 @@ function startMysqlServer() {
         console.error('MySQL database process spawn error:', err);
       });
 
-      // Give database server 2 seconds to initialize and listen on port 3307
-      setTimeout(resolve, 2000);
+      // Wait until MySQL is accepting connections on port 3307
+      waitForPort(3307).then(resolve);
     } catch (e) {
       console.error('Failed to spawn MySQL database server:', e);
       resolve();
