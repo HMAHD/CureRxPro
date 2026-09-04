@@ -37,5 +37,9 @@
             </tbody>
           </table>
         </div>
+        <div style="margin-top:12px;">
+          <button id="btn-med-prev">&#8592; Prev</button>
+          <button id="btn-med-next">Next &#8594;</button>
+        </div>
       </div>
     </section>
