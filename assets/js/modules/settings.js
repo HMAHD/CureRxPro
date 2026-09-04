@@ -12,6 +12,7 @@ export function init() {
     wireBackupRestore();
     wireRenewBanner();
     wireBillingToggle();
+    wireLangSwitcher();
 }
 
 export async function loadSettings() {
@@ -387,4 +388,12 @@ async function syncOnlineSubscription() {
     } catch (err) {
         console.log('Online subscription sync skipped (offline or server unreachable)');
     }
+}
+
+function wireLangSwitcher() {
+    const sel = document.getElementById('lang-select');
+    if (!sel) return;
+    sel.addEventListener('change', (e) => {
+        window.i18n?.setLanguage(e.target.value);
+    });
 }

@@ -3,6 +3,7 @@ import * as api   from '../api.js';
 import * as state from '../state.js';
 import { showToast } from '../components/toast.js';
 import { escapeHtml } from '../api.js';
+import { openModal, closeModal } from '../components/modal.js';
 
 let currentPage = 0;
 const PAGE_SIZE  = 50;
@@ -12,6 +13,8 @@ export function init() {
     loadMedicinesList();
     initDoctorManagement();
     wirePaginationButtons();
+    wireMedicineModal();
+    loadDoctorsList();
 }
 
 function wirePaginationButtons() {
@@ -281,4 +284,43 @@ function initDoctorManagement() {
             }
         });
     }
+}
+
+function wireMedicineModal() {
+    const btnOpen = document.getElementById('btn-new-medicine-modal');
+    if (btnOpen) btnOpen.addEventListener('click', () => openModal('modal-medicine'));
+
+    document.querySelectorAll('#modal-medicine .modal-close, #modal-medicine .btn-modal-close').forEach(btn => {
+        btn.addEventListener('click', () => closeModal('modal-medicine'));
+    });
+
+    const form = document.getElementById('form-medicine-modal');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            name:            document.getElementById('med-name-in').value.trim(),
+            generic_name:    document.getElementById('med-generic-in').value.trim(),
+            type:            document.getElementById('med-type-in').value,
+            default_strength: document.getElementById('med-strength-in').value.trim(),
+            unit_price:      parseFloat(document.getElementById('med-price-in').value) || 0,
+        };
+
+        try {
+            const json = await api.post('/medicines.php', payload);
+            if (json.status === 'success') {
+                showToast('Medicine added successfully.', 'success');
+                closeModal('modal-medicine');
+                form.reset();
+                document.getElementById('med-price-in').value = '10.00';
+                currentPage = 0;
+                loadMedicinesList();
+            } else {
+                showToast(json.message || 'Failed to add medicine.', 'error');
+            }
+        } catch (err) {
+            showToast(err.message || 'Failed to add medicine.', 'error');
+        }
+    });
 }

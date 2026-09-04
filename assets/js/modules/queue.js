@@ -15,6 +15,9 @@ export function init() {
         addPatientToQueue(e.detail.patientId, e.detail.patientName);
     });
 
+    // Refresh queue list after billing actions
+    document.addEventListener('crx:reloadQueue', () => loadWaitingQueue());
+
     loadWaitingQueue();
 }
 
@@ -207,6 +210,12 @@ async function loadQueueMonitorDashboard() {
         console.error(err);
         showToast('Failed to load queue monitor data.', 'error');
     }
+}
+
+function openAddToQueueModal(docId) {
+    const chlDocSelect = document.getElementById('chl-doctor-select');
+    if (chlDocSelect && docId) chlDocSelect.value = docId;
+    document.querySelector('[data-tab="tab-channeling-billing"]')?.click();
 }
 
 // Interval management — called by main.js nav handler when switching to/from queue-monitor tab
