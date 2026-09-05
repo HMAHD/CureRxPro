@@ -33,7 +33,9 @@ class SettingsControllerTest extends TestCase
     /** Task requirement 1: valid key passes */
     public function testValidKeyReturnsTrue(): void
     {
-        $key    = $this->makeKey('test-secret', 'pro', time() + 86400);
+        // Static far-future expiry (year 2286) — avoids time() producing '+' in base64
+        // which strtr converts to '-', corrupting explode('-', $key, 3).
+        $key    = $this->makeKey('test-secret', 'pro', 9999999999);
         $result = $this->method->invoke($this->controller, $key, 'test-secret');
         $this->assertTrue($result['valid']);
     }
