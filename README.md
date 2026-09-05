@@ -149,6 +149,84 @@ cureRXPro/
 
 ---
 
+## Development Setup
+
+**Prerequisites:**
+- [Bun](https://bun.sh) ≥ 1.0
+- PHP 8.1+ with `pdo_sqlite` and `pdo_mysql` extensions
+- [Composer](https://getcomposer.org)
+- XAMPP or portable MySQL (for local app run; not required for tests)
+
+**Install dependencies:**
+```bash
+bun install
+composer install
+```
+
+---
+
+## Running Tests
+
+Integration tests use an in-memory SQLite database — no MySQL instance is needed to run the test suite.
+
+**All tests:**
+```bash
+bun run test
+```
+
+**PHP tests only (unit + integration, SQLite in-memory):**
+```bash
+vendor/bin/phpunit
+```
+
+**JavaScript tests only:**
+```bash
+bun test tests/js
+```
+
+**PHPStan static analysis:**
+```bash
+vendor/bin/phpstan analyse --no-progress
+```
+
+### Test Suite Overview
+
+| Suite | Location | Runner | Count |
+| :--- | :--- | :--- | :--- |
+| PHP Unit tests | `tests/Unit/` | PHPUnit 10 | 31 tests |
+| PHP Integration tests | `tests/Integration/` | PHPUnit 10 (SQLite) | 15 tests |
+| JavaScript tests | `tests/js/` | bun + happy-dom | 30 tests |
+
+### CI
+
+Every push runs the full pipeline via `.github/workflows/lint.yml`:
+1. PHPStan level-5 static analysis
+2. ESLint on all JS/MJS files
+3. PHPUnit (requires `pdo_sqlite` extension)
+4. `bun test tests/js`
+
+---
+
+## Building the Desktop App
+
+```bash
+bun run dist
+```
+
+Outputs the Windows installer to `dist_app/`.
+
+---
+
+## Starting for Development
+
+```bash
+bun run start
+```
+
+Launches the Electron app. Requires a running MySQL instance (XAMPP or portable `bin/mysql`).
+
+---
+
 ## Workstation Access Control
 
 Workstation access roles are configured via `db_setup.php` to scope interface elements based on user duties:
