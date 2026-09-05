@@ -25,7 +25,7 @@
 
         <!-- License Days Remaining Badge -->
         <div class="stat-pill" id="stat-license-badge">
-          <i class="fa-solid fa-clock"></i> <span data-i18n="stat_license_days">License</span>: <strong id="stat-license-days-count" style="color:var(--teal-600);">-- Days</strong>
+          <i class="fa-solid fa-clock"></i> <span data-i18n="stat_license_days">License</span>: <strong id="stat-license-days-count" style="color:var(--teal-600);">—</strong>
         </div>
 
         <div class="stat-pill">
