@@ -22,11 +22,11 @@
   "author": "CureRx HealthTech",
   "license": "ISC",
   "dependencies": {
-    "electron-updater": "6.2.1"
+    "electron-updater": "6.6.2"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.14.0",
-    "electron": "30.0.0",
+    "electron": "39.8.10",
     "electron-builder": "24.13.3",
     "eslint": "8.57.0",
     "happy-dom": "20.14.0"
