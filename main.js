@@ -220,7 +220,7 @@ app.whenReady().then(async () => {
 
 function gracefulCleanup(callback) {
   if (phpProcess) {
-    try { phpProcess.kill(); } catch (e) {}
+    try { phpProcess.kill(); } catch (_e) { void _e; }
     phpProcess = null;
   }
 
@@ -231,14 +231,14 @@ function gracefulCleanup(callback) {
     const { exec } = require('child_process');
     exec(`"${mysqlAdminPath}" -u root --port=3307 shutdown`, () => {
       if (mysqlProcess) {
-        try { mysqlProcess.kill(); } catch (e) {}
+        try { mysqlProcess.kill(); } catch (_e) { void _e; }
         mysqlProcess = null;
       }
       if (callback) callback();
     });
   } else {
     if (mysqlProcess) {
-      try { mysqlProcess.kill(); } catch (e) {}
+      try { mysqlProcess.kill(); } catch (_e) { void _e; }
       mysqlProcess = null;
     }
     if (callback) callback();
