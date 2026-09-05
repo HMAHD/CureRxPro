@@ -132,7 +132,10 @@ composer install
 bun run start
 ```
 
-Launches the Electron app. Requires a running MySQL instance (XAMPP or the portable `bin/mysql` on Windows).
+Launches the Electron app. Requires a running MySQL instance.
+
+- **macOS:** [DBngin](https://dbngin.com) (free, one-click MySQL manager) or `brew install mysql && brew services start mysql`
+- **Windows:** XAMPP, or the portable `bin/mysql` bundled in the repo
 
 ### Build the installer
 
