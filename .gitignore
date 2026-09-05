@@ -22,3 +22,9 @@ config/db_config.json
 
 # Application logs
 storage/logs/*.log
+
+# PHPUnit cache
+.phpunit.result.cache
+
+# Editor
+.vscode/
