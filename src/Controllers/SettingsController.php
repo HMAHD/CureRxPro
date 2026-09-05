@@ -52,7 +52,7 @@ class SettingsController
         if (!hash_equals($expectedHmac, $providedHmac)) {
             return ['valid' => false];
         }
-        $decoded = base64_decode(strtr($payload, '-_', '+/'));
+        $decoded = base64_decode(strtr($payload, '-_', '+/'), true);
         if ($decoded === false) {
             return ['valid' => false];
         }
