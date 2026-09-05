@@ -2,7 +2,7 @@ name: Code Quality & Linting
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, refactor/swe-remediation ]
   pull_request:
     branches: [ main ]
 
@@ -14,18 +14,39 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          node-version: 20
-          cache: 'npm'
+          php-version: '8.1'
+          extensions: pdo_sqlite
+          tools: composer
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Install Dependencies
-        run: npm ci
+        run: bun install
 
       - name: Run JavaScript Linter
-        run: npm run lint
+        run: bun run lint
 
       - name: Check PHP Syntax
         run: |
-          find . -name "*.php" -not -path "./node_modules/*" -not -path "./bin/*" -exec php -l {} \;
+          find . -name "*.php" \
+            -not -path "./node_modules/*" \
+            -not -path "./bin/*" \
+            -exec php -l {} \;
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run PHPStan Static Analysis
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Run PHP Tests
+        run: vendor/bin/phpunit --colors=never
+
+      - name: Run JS Tests
+        run: bun run test:js

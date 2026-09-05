@@ -11,6 +11,9 @@ try {
   console.log('autoUpdater module optional load note:', err.message);
 }
 
+const isWin = process.platform === 'win32';
+const EXE = isWin ? '.exe' : '';
+
 let mainWindow;
 let phpProcess;
 let mysqlProcess;
@@ -37,11 +40,28 @@ function copyFolderRecursiveSync(source, target) {
   }
 }
 
+// TCP port poll — resolves true when port accepts connections, false on timeout
+function waitForPort(port, host = '127.0.0.1', maxMs = 20000) {
+  return new Promise((resolve) => {
+    const net   = require('net');
+    const start = Date.now();
+    const attempt = () => {
+      const sock = net.createConnection({ port, host });
+      sock.on('connect', () => { sock.destroy(); resolve(true); });
+      sock.on('error',   () => {
+        if (Date.now() - start > maxMs) { resolve(false); }
+        else { setTimeout(attempt, 300); }
+      });
+    };
+    attempt();
+  });
+}
+
 // 1. Start Portable Embedded MySQL Database Server
 function startMysqlServer() {
   return new Promise((resolve) => {
     const fs = require('fs');
-    const mysqlBin = path.join(__dirname, 'bin', 'mysql', 'bin', 'mysqld.exe');
+    const mysqlBin = path.join(__dirname, 'bin', 'mysql', 'bin', `mysqld${EXE}`);
     const baseDir = path.join(__dirname, 'bin', 'mysql');
     
     // Standard User-writable database directory inside AppData
@@ -89,8 +109,8 @@ function startMysqlServer() {
         console.error('MySQL database process spawn error:', err);
       });
 
-      // Give database server 2 seconds to initialize and listen on port 3307
-      setTimeout(resolve, 2000);
+      // Wait until MySQL is accepting connections on port 3307
+      waitForPort(3307).then(resolve);
     } catch (e) {
       console.error('Failed to spawn MySQL database server:', e);
       resolve();
@@ -103,10 +123,14 @@ function startPhpServer() {
   return new Promise((resolve, reject) => {
     const fs = require('fs');
     let phpBin = 'php';
-    const localPhp = path.join(__dirname, 'bin', 'php', 'php.exe');
+    const localPhp = path.join(__dirname, 'bin', 'php', `php${EXE}`);
 
     if (fs.existsSync(localPhp)) {
       phpBin = localPhp;
+    } else if (!isWin) {
+      // macOS/Linux: check Homebrew and system paths
+      const macPaths = ['/opt/homebrew/bin/php', '/usr/local/bin/php', '/usr/bin/php'];
+      phpBin = macPaths.find(p => fs.existsSync(p)) || 'php';
     } else if (fs.existsSync('C:\\xampp\\php\\php.exe')) {
       phpBin = 'C:\\xampp\\php\\php.exe';
     }
@@ -196,25 +220,25 @@ app.whenReady().then(async () => {
 
 function gracefulCleanup(callback) {
   if (phpProcess) {
-    try { phpProcess.kill(); } catch (e) {}
+    try { phpProcess.kill(); } catch (_e) { void _e; }
     phpProcess = null;
   }
 
-  const mysqlAdminPath = path.join(__dirname, 'bin', 'mysql', 'bin', 'mysqladmin.exe');
+  const mysqlAdminPath = path.join(__dirname, 'bin', 'mysql', 'bin', `mysqladmin${EXE}`);
   const fs = require('fs');
   if (mysqlProcess && fs.existsSync(mysqlAdminPath)) {
     console.log('Initiating graceful MySQL shutdown via mysqladmin...');
     const { exec } = require('child_process');
     exec(`"${mysqlAdminPath}" -u root --port=3307 shutdown`, () => {
       if (mysqlProcess) {
-        try { mysqlProcess.kill(); } catch (e) {}
+        try { mysqlProcess.kill(); } catch (_e) { void _e; }
         mysqlProcess = null;
       }
       if (callback) callback();
     });
   } else {
     if (mysqlProcess) {
-      try { mysqlProcess.kill(); } catch (e) {}
+      try { mysqlProcess.kill(); } catch (_e) { void _e; }
       mysqlProcess = null;
     }
     if (callback) callback();
@@ -329,60 +353,67 @@ ipcMain.on('refocus-window', () => {
   }
 });
 
-// IPC Handler to download and run the silent update installer
-ipcMain.on('start-auto-update', (event, downloadUrl) => {
+// IPC Handler: renderer sends a version tag; main constructs and validates the URL
+ipcMain.on('start-auto-update', (event, versionTag) => {
   const fs = require('fs');
   const https = require('https');
   const { exec } = require('child_process');
 
+  // Validate version tag format (e.g. v1.4.2) — reject anything else
+  if (typeof versionTag !== 'string' || !/^v\d+\.\d+\.\d+$/.test(versionTag)) {
+    event.reply('auto-update-error', 'Invalid version tag');
+    return;
+  }
+
+  // URL is constructed here — renderer cannot influence the host
+  const downloadUrl = `https://github.com/HMAHD/CureRxPro/releases/download/${versionTag}/CureRx_Pro_Setup_Update.exe`;
+
   const tempDir = app.getPath('temp');
   const installerPath = path.join(tempDir, 'CureRx_Pro_Setup_Update.exe');
 
-  // Helper to safely delete file and download
-  function startDownload(targetUrl) {
+  function startDownload(targetUrl, depth = 0) {
+    if (depth > 5) {
+      event.reply('auto-update-error', 'Too many redirects');
+      return;
+    }
+    // Only follow redirects to HTTPS within github.com / objects.githubusercontent.com
+    const allowedHosts = ['github.com', 'objects.githubusercontent.com'];
+    let parsedUrl;
+    try { parsedUrl = new URL(targetUrl); } catch (_) { parsedUrl = null; }
+    if (!parsedUrl || parsedUrl.protocol !== 'https:' || !allowedHosts.includes(parsedUrl.hostname)) {
+      event.reply('auto-update-error', 'Redirect to untrusted or non-HTTPS host blocked');
+      return;
+    }
+
     const file = fs.createWriteStream(installerPath);
-    
     https.get(targetUrl, (response) => {
-      // Handle redirect
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         file.close();
-        startDownload(response.headers.location);
+        startDownload(response.headers.location, depth + 1);
         return;
       }
-
       if (response.statusCode !== 200) {
         file.close();
         fs.unlink(installerPath, () => {});
         event.reply('auto-update-error', `Server returned status: ${response.statusCode}`);
         return;
       }
-
       const totalBytes = parseInt(response.headers['content-length'], 10) || 0;
       let downloadedBytes = 0;
-
       response.on('data', (chunk) => {
         downloadedBytes += chunk.length;
         file.write(chunk);
-        
         if (totalBytes > 0) {
-          const percent = Math.round((downloadedBytes / totalBytes) * 100);
-          event.reply('auto-update-progress', percent);
+          event.reply('auto-update-progress', Math.round((downloadedBytes / totalBytes) * 100));
         }
       });
-
       response.on('end', () => {
         file.end(() => {
           event.reply('auto-update-progress', 100);
-          
-          // Execute the installer silently in the background
-          // /S is the silent installer flag for NSIS installer
           setTimeout(() => {
             exec(`"${installerPath}" /S`, (err) => {
-              if (err) {
-                console.error('Failed to run silent installer:', err);
-              }
+              if (err) console.error('Failed to run silent installer:', err);
             });
-            // Quit the application so the installer can replace the executable files
             app.quit();
           }, 1000);
         });
@@ -394,8 +425,5 @@ ipcMain.on('start-auto-update', (event, downloadUrl) => {
     });
   }
 
-  // Delete previous update installer if exists, then download
-  fs.unlink(installerPath, () => {
-    startDownload(downloadUrl);
-  });
+  fs.unlink(installerPath, () => { startDownload(downloadUrl); });
 });

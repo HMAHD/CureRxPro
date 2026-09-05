@@ -103,12 +103,14 @@ function init_tables($pdo) {
         `enable_dispensary_billing` TINYINT(1) DEFAULT 1
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    // Check if settings row exists, insert default if empty
-    $stmt = $pdo->query("SELECT COUNT(*) FROM `settings`");
-    if ($stmt->fetchColumn() == 0) {
-        $expiry = date('Y-m-d', strtotime('+30 days'));
-        $pdo->exec("INSERT INTO `settings` (`doctor_name`, `qualifications`, `slmc_reg`, `clinic_name`, `clinic_address`, `clinic_phone`, `print_paper_size`, `default_language`, `subscription_expires_at`) 
-        VALUES ('Dr. Sampath Perera', 'MBBS (Colombo), MD (Family Medicine)', 'SLMC 34821', 'CureCare Medical Center', 'No. 124, High Level Road, Maharagama', '011-2849102 / 077-1234567', 'A5', 'bilingual', '$expiry');");
+    // Replace hardcoded settings seed
+    $seedFile = __DIR__ . '/../seeds/default_clinic.json';
+    if (file_exists($seedFile)) {
+        $seed = json_decode(file_get_contents($seedFile), true) ?? [];
+        $pdo->prepare("INSERT IGNORE INTO settings
+            (id, clinic_name, doctor_name, clinic_address, clinic_phone, slmc_reg)
+            VALUES (1, :clinic_name, :doctor_name, :clinic_address, :clinic_phone, :slmc_reg)")
+            ->execute($seed);
     }
 
     // Patients Table
@@ -145,30 +147,15 @@ function init_tables($pdo) {
     try { $pdo->exec("CREATE FULLTEXT INDEX `idx_patient_search` ON `patients` (`name`, `phone`, `patient_code`);"); } catch (\PDOException $e) {}
     try { $pdo->exec("CREATE FULLTEXT INDEX `idx_medicine_search` ON `medicines` (`name`, `generic_name`);"); } catch (\PDOException $e) {}
 
-    // Check if medicines table is empty, insert default Sri Lankan medicine templates if empty
-    $medCount = $pdo->query("SELECT COUNT(*) FROM `medicines`")->fetchColumn();
-    if ($medCount == 0) {
-        $defaultMeds = [
-            ['Paracetamol', 'Paracetamol', 'Tablet', '500mg', '1-1-1-1', 'කෑමට පසු (After meals)', 1.50, 1000],
-            ['Amoxicillin', 'Amoxicillin', 'Capsule', '500mg', '1-1-1-0', 'කෑමට පසු (After meals)', 8.50, 500],
-            ['Cetirizine', 'Cetirizine', 'Tablet', '10mg', '0-0-1-0', 'රාත්‍රියට කෑමට පසු (Night, after meals)', 2.00, 1000],
-            ['Metformin', 'Metformin', 'Tablet', '500mg', '1-0-1-0', 'කෑම සමඟ (With meals)', 3.50, 1000],
-            ['Atorvastatin', 'Atorvastatin', 'Tablet', '20mg', '0-0-1-0', 'රාත්‍රියට කෑමට පසු (Night, after meals)', 12.00, 500],
-            ['Omeprazole', 'Omeprazole', 'Capsule', '20mg', '1-0-1-0', 'කෑමට පැය භාගයකට පෙර (30 mins before meals)', 4.00, 500],
-            ['Domperidone', 'Domperidone', 'Tablet', '10mg', '1-0-1-0', 'කෑමට පැය භාගයකට පෙර (30 mins before meals)', 3.00, 500],
-            ['Salbutamol', 'Salbutamol', 'Tablet', '2mg', '1-1-1-0', 'කෑමට පසු (After meals)', 1.00, 1000],
-            ['Panadol', 'Paracetamol', 'Tablet', '500mg', '2-0-2-0', 'උණ හෝ කැක්කුම ඇති විට (When needed)', 2.50, 1000],
-            ['Peditral Sachet', 'Oral Rehydration Salts', 'Sachet', '1 Sachet', '1-0-1-0', 'ජලය ලීටරයක දියකර පානය කරන්න (Dissolve in 1L water)', 25.00, 100],
-            ['Clopidogrel', 'Clopidogrel', 'Tablet', '75mg', '0-1-0-0', 'කෑමට පසු (After meals)', 18.00, 300],
-            ['Losartan Potassium', 'Losartan Potassium', 'Tablet', '50mg', '1-0-0-0', 'උදෑසන කෑමට පසු (Morning, after meals)', 8.00, 500],
-            ['Erythromycin', 'Erythromycin', 'Tablet', '250mg', '1-1-1-1', 'කෑමට පැය බාගයකට පෙර (Before meals)', 9.00, 500],
-            ['Cloxacillin', 'Cloxacillin', 'Capsule', '250mg', '1-1-1-1', 'කෑමට පැය බාගයකට පෙර (Before meals)', 7.50, 500],
-            ['Fusi-C Cream', 'Fusidic Acid', 'Ointment/Cream', '15g', 'Apply 2 times daily', 'බාහිර භාවිතය සඳහා පමණි (For external use only)', 280.00, 50]
-        ];
-
-        $insStmt = $pdo->prepare("INSERT INTO `medicines` (`name`, `generic_name`, `type`, `default_strength`, `default_dosage`, `default_instruction`, `unit_price`, `stock_qty`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        foreach ($defaultMeds as $med) {
-            $insStmt->execute($med);
+    // Replace hardcoded medicines seed
+    $medFile = __DIR__ . '/../seeds/default_medicines.json';
+    if (file_exists($medFile)) {
+        $meds = json_decode(file_get_contents($medFile), true) ?? [];
+        $stmt = $pdo->prepare("INSERT IGNORE INTO medicines
+            (name, strength, unit, unit_price, stock_qty, instruction_en, instruction_si)
+            VALUES (:name, :strength, :unit, :unit_price, :stock_qty, :instruction_en, :instruction_si)");
+        foreach ($meds as $med) {
+            $stmt->execute($med);
         }
     }
 
@@ -243,22 +230,6 @@ function init_tables($pdo) {
         FOREIGN KEY (`prescription_id`) REFERENCES `prescriptions`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-    // Alter table fallback checks to ensure columns exist for existing tables
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `practice_mode` VARCHAR(50) NOT NULL DEFAULT 'dispensary';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `subscription_status` VARCHAR(50) NOT NULL DEFAULT 'active';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `subscription_plan` VARCHAR(100) NOT NULL DEFAULT 'Monthly Pro (LKR 3,000/mo)';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `subscription_expires_at` DATE DEFAULT '2026-12-31';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `license_key` VARCHAR(100) NOT NULL DEFAULT 'CRX-8829-PRO-MONTHLY';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `medicines` ADD COLUMN `unit_price` DECIMAL(10,2) DEFAULT 10.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `medicines` ADD COLUMN `stock_qty` INT DEFAULT 500;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescription_items` ADD COLUMN `unit_price` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescription_items` ADD COLUMN `item_total` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescription_items` ADD COLUMN `item_source` VARCHAR(50) NOT NULL DEFAULT 'clinic';"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `consultation_fee` DECIMAL(10,2) DEFAULT 1000.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `medicines_total` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `discount` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `grand_total` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
-
     // Multi-doctor setup
     $pdo->exec("CREATE TABLE IF NOT EXISTS `doctors` (
         `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -272,10 +243,6 @@ function init_tables($pdo) {
     if ($docCount == 0) {
         $pdo->exec("INSERT INTO `doctors` (`id`, `name`, `qualifications`, `slmc_reg`) VALUES (1, 'Dr. Sampath Perera', 'MBBS (Colombo), MD (Family Medicine)', 'SLMC 34821')");
     }
-
-    try { $pdo->exec("ALTER TABLE `settings` ADD COLUMN `active_doctor_id` INT DEFAULT 1;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `doctor_id` INT DEFAULT 1;"); } catch (\Exception $e) {}
-    try { $pdo->exec("ALTER TABLE `prescriptions` ADD COLUMN `hospital_fee` DECIMAL(10,2) DEFAULT 0.00;"); } catch (\Exception $e) {}
 
     // Waiting queue table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `waiting_queue` (
@@ -304,8 +271,6 @@ function init_tables($pdo) {
         FOREIGN KEY (`patient_id`) REFERENCES `patients`(`id`) ON DELETE CASCADE,
         FOREIGN KEY (`doctor_id`) REFERENCES `doctors`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-    try { $pdo->exec("ALTER TABLE `channeling_bills` ADD COLUMN `payment_status` ENUM('Paid', 'Unpaid') DEFAULT 'Paid';"); } catch (\Exception $e) {}
 
     // Add database indexes for high-speed autocomplete search performance
     try { $pdo->exec("CREATE INDEX `idx_patients_name` ON `patients` (`name`);"); } catch (\Exception $e) {}

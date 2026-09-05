@@ -7,7 +7,10 @@
     "start": "electron .",
     "dist": "electron-builder --win",
     "lint": "eslint main.js preload.js",
-    "prepare-portable": "node scripts/prepare-portable.js"
+    "prepare-portable": "node scripts/prepare-portable.js",
+    "test:js": "bun test tests/js",
+    "test:php": "vendor/bin/phpunit",
+    "test": "bun run test:php && bun run test:js"
   },
   "keywords": [
     "prescription",
@@ -19,12 +22,14 @@
   "author": "CureRx HealthTech",
   "license": "ISC",
   "dependencies": {
-    "electron-updater": "^6.2.1"
+    "electron-updater": "6.6.2"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3",
-    "eslint": "^8.57.0"
+    "@happy-dom/global-registrator": "20.14.0",
+    "electron": "39.8.10",
+    "electron-builder": "24.13.3",
+    "eslint": "8.57.0",
+    "happy-dom": "20.14.0"
   },
   "build": {
     "asar": false,

@@ -5,6 +5,28 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/auth_check.php';
 verify_api_request();
 
+function backup_encryption_key(): string {
+    $secretFile = (getenv('USER_DATA_PATH') ?: __DIR__ . '/..') . '/api_secret.key';
+    $secret = file_exists($secretFile) ? trim(file_get_contents($secretFile)) : 'default-insecure';
+    return hash('sha256', $secret, true); // 32 raw bytes for AES-256
+}
+
+function encrypt_backup(string $plaintext): string {
+    $key = backup_encryption_key();
+    $iv  = random_bytes(16);
+    $cipher = openssl_encrypt($plaintext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+    return base64_encode($iv . $cipher);
+}
+
+function decrypt_backup(string $ciphertext): string|false {
+    $key  = backup_encryption_key();
+    $raw  = base64_decode($ciphertext);
+    if (strlen($raw) < 17) return false;
+    $iv     = substr($raw, 0, 16);
+    $cipher = substr($raw, 16);
+    return openssl_decrypt($cipher, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+}
+
 function generate_full_backup($pdo) {
     return [
         'version' => '2.5.0',
@@ -27,10 +49,12 @@ $action = $_GET['action'] ?? ($_POST['action'] ?? '');
 if ($action === 'export') {
     try {
         $backup = generate_full_backup($pdo);
-        $filename = 'CureRx_Pro_Backup_' . date('Y-m-d_His') . '.json';
-        header('Content-Type: application/json');
+        $json = json_encode($backup, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $encrypted = encrypt_backup($json);
+        $filename = 'CureRx_Pro_Backup_' . date('Y-m-d_His') . '.crxbak';
+        header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        echo json_encode($backup, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        echo $encrypted;
         exit;
     } catch (\Exception $e) {
         echo json_encode(['status' => 'error', 'message' => 'Export failed: ' . $e->getMessage()]);
@@ -45,8 +69,19 @@ if ($action === 'import') {
             exit;
         }
 
-        $fileContent = file_get_contents($_FILES['backup_file']['tmp_name']);
-        $data = json_decode($fileContent, true);
+        $raw = file_get_contents($_FILES['backup_file']['tmp_name']);
+        // Support both legacy .json and new encrypted .crxbak format
+        $decoded = json_decode($raw, true);
+        if ($decoded === null) {
+            $plaintext = decrypt_backup($raw);
+            if ($plaintext === false) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Cannot decrypt backup file. Wrong installation key?']);
+                exit;
+            }
+            $decoded = json_decode($plaintext, true);
+        }
+        $data = $decoded;
 
         if (!$data || !is_array($data) || (!isset($data['medicines']) && !isset($data['patients']))) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid backup file format. Essential database structure missing.']);

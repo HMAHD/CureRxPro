@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    paths:
+        - api
+        - config
+        - src
+    excludePaths:
+        - bin
+        - node_modules
+        - vendor
+        # Complex monolithic files — not covered by Phase 3 MVC
+        - api/backup.php
+        - api/run_migrations.php
+        - api/save_db_config.php
+        - config/db.php
