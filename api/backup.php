@@ -27,20 +27,29 @@ function decrypt_backup(string $ciphertext): string|false {
     return openssl_decrypt($cipher, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
 }
 
-function generate_full_backup($pdo) {
+function fetch_table_rows(\PDO $pdo, string $table): array {
+    $stmt = $pdo->query("SELECT * FROM `{$table}`");
+    $rows = [];
+    while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        $rows[] = $row;
+    }
+    return $rows;
+}
+
+function generate_full_backup(\PDO $pdo): array {
     return [
-        'version' => '2.5.0',
-        'exported_at' => date('Y-m-d H:i:s'),
-        'settings' => $pdo->query("SELECT * FROM `settings`")->fetchAll(),
-        'doctors' => $pdo->query("SELECT * FROM `doctors`")->fetchAll(),
-        'patients' => $pdo->query("SELECT * FROM `patients`")->fetchAll(),
-        'medicines' => $pdo->query("SELECT * FROM `medicines`")->fetchAll(),
-        'templates' => $pdo->query("SELECT * FROM `templates`")->fetchAll(),
-        'template_items' => $pdo->query("SELECT * FROM `template_items`")->fetchAll(),
-        'prescriptions' => $pdo->query("SELECT * FROM `prescriptions`")->fetchAll(),
-        'prescription_items' => $pdo->query("SELECT * FROM `prescription_items`")->fetchAll(),
-        'waiting_queue' => $pdo->query("SELECT * FROM `waiting_queue`")->fetchAll(),
-        'channeling_bills' => $pdo->query("SELECT * FROM `channeling_bills`")->fetchAll()
+        'version'            => '2.5.0',
+        'exported_at'        => date('Y-m-d H:i:s'),
+        'settings'           => fetch_table_rows($pdo, 'settings'),
+        'doctors'            => fetch_table_rows($pdo, 'doctors'),
+        'patients'           => fetch_table_rows($pdo, 'patients'),
+        'medicines'          => fetch_table_rows($pdo, 'medicines'),
+        'templates'          => fetch_table_rows($pdo, 'templates'),
+        'template_items'     => fetch_table_rows($pdo, 'template_items'),
+        'prescriptions'      => fetch_table_rows($pdo, 'prescriptions'),
+        'prescription_items' => fetch_table_rows($pdo, 'prescription_items'),
+        'waiting_queue'      => fetch_table_rows($pdo, 'waiting_queue'),
+        'channeling_bills'   => fetch_table_rows($pdo, 'channeling_bills'),
     ];
 }
 
@@ -108,16 +117,17 @@ if ($action === 'import') {
         $pdo->beginTransaction();
         $pdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
 
-        // Clear existing tables
-        $pdo->exec("TRUNCATE TABLE `channeling_bills`;");
-        $pdo->exec("TRUNCATE TABLE `waiting_queue`;");
-        $pdo->exec("TRUNCATE TABLE `prescription_items`;");
-        $pdo->exec("TRUNCATE TABLE `prescriptions`;");
-        $pdo->exec("TRUNCATE TABLE `template_items`;");
-        $pdo->exec("TRUNCATE TABLE `templates`;");
-        $pdo->exec("TRUNCATE TABLE `medicines`;");
-        $pdo->exec("TRUNCATE TABLE `patients`;");
-        $pdo->exec("TRUNCATE TABLE `doctors`;");
+        // DELETE instead of TRUNCATE — TRUNCATE causes an implicit commit in MySQL,
+        // which would prevent rollback if the insert phase fails.
+        $pdo->exec("DELETE FROM `channeling_bills`;");
+        $pdo->exec("DELETE FROM `waiting_queue`;");
+        $pdo->exec("DELETE FROM `prescription_items`;");
+        $pdo->exec("DELETE FROM `prescriptions`;");
+        $pdo->exec("DELETE FROM `template_items`;");
+        $pdo->exec("DELETE FROM `templates`;");
+        $pdo->exec("DELETE FROM `medicines`;");
+        $pdo->exec("DELETE FROM `patients`;");
+        $pdo->exec("DELETE FROM `doctors`;");
 
         // Restore Doctors
         if (!empty($data['doctors'])) {

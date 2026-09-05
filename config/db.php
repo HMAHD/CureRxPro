@@ -138,6 +138,10 @@ function init_tables($pdo) {
         `default_instruction` VARCHAR(100),
         `unit_price` DECIMAL(10,2) DEFAULT 10.00,
         `stock_qty` INT DEFAULT 500,
+        `strength` VARCHAR(100) NULL DEFAULT NULL,
+        `unit` VARCHAR(50) NOT NULL DEFAULT 'Tablet',
+        `instruction_en` TEXT NULL DEFAULT NULL,
+        `instruction_si` TEXT NULL DEFAULT NULL,
         `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
@@ -147,16 +151,20 @@ function init_tables($pdo) {
     try { $pdo->exec("CREATE FULLTEXT INDEX `idx_patient_search` ON `patients` (`name`, `phone`, `patient_code`);"); } catch (\PDOException $e) {}
     try { $pdo->exec("CREATE FULLTEXT INDEX `idx_medicine_search` ON `medicines` (`name`, `generic_name`);"); } catch (\PDOException $e) {}
 
-    // Replace hardcoded medicines seed
-    $medFile = __DIR__ . '/../seeds/default_medicines.json';
-    if (file_exists($medFile)) {
-        $meds = json_decode(file_get_contents($medFile), true) ?? [];
-        $stmt = $pdo->prepare("INSERT IGNORE INTO medicines
-            (name, strength, unit, unit_price, stock_qty, instruction_en, instruction_si)
-            VALUES (:name, :strength, :unit, :unit_price, :stock_qty, :instruction_en, :instruction_si)");
-        foreach ($meds as $med) {
-            $stmt->execute($med);
+    // Seed default medicines (graceful — column set may differ on older schemas)
+    try {
+        $medFile = __DIR__ . '/../seeds/default_medicines.json';
+        if (file_exists($medFile)) {
+            $meds = json_decode(file_get_contents($medFile), true) ?? [];
+            $stmt = $pdo->prepare("INSERT IGNORE INTO medicines
+                (name, strength, unit, unit_price, stock_qty, instruction_en, instruction_si)
+                VALUES (:name, :strength, :unit, :unit_price, :stock_qty, :instruction_en, :instruction_si)");
+            foreach ($meds as $med) {
+                $stmt->execute($med);
+            }
         }
+    } catch (\PDOException $e) {
+        // Columns not yet present — migration 008 will add them on next migration run
     }
 
     // Templates Table
