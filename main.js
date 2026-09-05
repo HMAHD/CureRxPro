@@ -128,8 +128,13 @@ function startPhpServer() {
     if (fs.existsSync(localPhp)) {
       phpBin = localPhp;
     } else if (!isWin) {
-      // macOS/Linux: check Homebrew and system paths
-      const macPaths = ['/opt/homebrew/bin/php', '/usr/local/bin/php', '/usr/bin/php'];
+      // macOS/Linux: check Herd, Homebrew, and system paths in priority order
+      const macPaths = [
+        `${process.env.HOME}/Library/Application Support/Herd/bin/php`, // Laravel Herd
+        '/opt/homebrew/bin/php',                                         // Homebrew (Apple Silicon)
+        '/usr/local/bin/php',                                            // Homebrew (Intel)
+        '/usr/bin/php'                                                   // System
+      ];
       phpBin = macPaths.find(p => fs.existsSync(p)) || 'php';
     } else if (fs.existsSync('C:\\xampp\\php\\php.exe')) {
       phpBin = 'C:\\xampp\\php\\php.exe';

@@ -8,9 +8,9 @@
   <!-- FontAwesome 6 Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Custom Stylesheets -->
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/print.css">
+  <!-- Custom Stylesheets — filemtime query busts Electron's renderer cache on change -->
+  <link rel="stylesheet" href="assets/css/style.css?v=<?php echo filemtime(__DIR__ . '/../../assets/css/style.css'); ?>">
+  <link rel="stylesheet" href="assets/css/print.css?v=<?php echo filemtime(__DIR__ . '/../../assets/css/print.css'); ?>">
 
   <style>
     body.role-receptionist [data-tab="tab-builder"],

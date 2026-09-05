@@ -41,7 +41,7 @@ foreach ($modals as $modal) {
 ?>
 
 <script>window.__crxToken = '<?php echo htmlspecialchars($crx_token, ENT_QUOTES); ?>';</script>
-<script src="assets/js/i18n.js"></script>
-<script type="module" src="assets/js/main.js"></script>
+<script src="assets/js/i18n.js?v=<?php echo filemtime(__DIR__ . '/assets/js/i18n.js'); ?>"></script>
+<script type="module" src="assets/js/main.js?v=<?php echo filemtime(__DIR__ . '/assets/js/main.js'); ?>"></script>
 </body>
 </html>
