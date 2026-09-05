@@ -91,6 +91,23 @@ describe('createAutocomplete', () => {
         expect(dropdown.hidden).toBe(true);
     });
 
+    test('hides dropdown when fetchFn returns empty results', async () => {
+        createAutocomplete({
+            inputId:   'ac-input',
+            dropdownId: 'ac-dropdown',
+            fetchFn:   async () => [],
+            onSelect:  () => {},
+            minChars:  1,
+        });
+
+        input.value = 'Z';
+        input.dispatchEvent(new Event('input'));
+        await new Promise(r => setTimeout(r, 400));
+
+        expect(dropdown.hidden).toBe(true);
+        expect(dropdown.children.length).toBe(0);
+    });
+
     test('uses label property over name when both present', async () => {
         createAutocomplete({
             inputId:   'ac-input',

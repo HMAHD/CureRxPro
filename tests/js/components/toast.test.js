@@ -39,4 +39,13 @@ describe('showToast', () => {
         const container = document.getElementById('toast-container');
         expect(container.children.length).toBe(2);
     });
+
+    test('removes toast element after duration elapses', async () => {
+        showToast('Bye', 'info', 0);
+        const container = document.getElementById('toast-container');
+        expect(container.children.length).toBe(1);
+        // duration=0 fires the fade-out immediately; +300ms for the remove timeout
+        await new Promise(r => setTimeout(r, 400));
+        expect(container.children.length).toBe(0);
+    });
 });
