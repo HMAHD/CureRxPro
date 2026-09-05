@@ -3,22 +3,13 @@ parameters:
     paths:
         - api
         - config
+        - src
     excludePaths:
         - bin
         - node_modules
         - vendor
-        # Legacy monolithic API files — excluded until Phase 3 MVC refactoring replaces them
+        # Complex monolithic files — not covered by Phase 3 MVC
         - api/backup.php
-        - api/doctors.php
-        - api/medicines.php
-        - api/patients.php
-        - api/prescriptions.php
-        - api/queue.php
-        - api/queue_billing.php
         - api/run_migrations.php
         - api/save_db_config.php
-        - api/stats.php
-        - api/templates.php
-        # api/settings.php analysed (HMAC license check added in Phase 0)
-        # config/db.php excluded — monolithic schema init, refactored in Phase 3
         - config/db.php
